@@ -30,3 +30,10 @@ Feature: Dashboard UI Tests
     Given I am logged in as admin
     When I click on the plants navigation link
     Then I should be on the plants page
+
+# TC_UI_26: Dashboard Navigation to Sales
+  @TC_UI_26
+  Scenario: Admin can navigate from dashboard to sales page
+    Given I am logged in as admin
+    When I click on the sales navigation link
+    Then I should be on the sales page
