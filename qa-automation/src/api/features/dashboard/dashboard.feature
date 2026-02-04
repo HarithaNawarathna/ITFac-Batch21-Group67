@@ -23,3 +23,11 @@ Feature: Dashboard API Tests
     Given Admin authenticated
     When I send a GET request to the categories summary endpoint
     Then the API response status should be 200
+
+# TC_API_35: Get All Categories for Dashboard Display
+  @TC_API_35
+  Scenario: Admin can fetch all categories for dashboard
+    Given Admin authenticated
+    When I send a GET request to the categories endpoint
+    Then the API response status should be 200
+    And the response should be an array
