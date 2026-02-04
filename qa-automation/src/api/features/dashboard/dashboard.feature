@@ -68,3 +68,10 @@ Feature: Dashboard API Tests
     Given User authenticated
     When I try to create a category with name "TestForbidden"
     Then the API response status should be 400
+
+# TC_API_41: Main Categories Endpoint for Dashboard
+  @TC_API_41
+  Scenario: Admin can fetch main categories for dashboard filter
+    Given Admin authenticated
+    When I send a GET request to the main categories endpoint
+    Then the API response status should be 200
