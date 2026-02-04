@@ -23,3 +23,10 @@ Feature: Dashboard UI Tests
     Given I am logged in as admin
     When I click on the categories navigation link
     Then I should be on the category page
+
+ # TC_UI_25: Dashboard Navigation to Plants
+  @TC_UI_25
+  Scenario: Admin can navigate from dashboard to plants page
+    Given I am logged in as admin
+    When I click on the plants navigation link
+    Then I should be on the plants page
