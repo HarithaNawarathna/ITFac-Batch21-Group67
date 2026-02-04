@@ -46,3 +46,10 @@ Feature: Dashboard API Tests
     When I send a GET request to the sales endpoint
     Then the API response status should be 200
     And the response should be an array
+
+# TC_API_38: Unauthorized Access Returns 401
+  @TC_API_38
+  Scenario: Unauthenticated request to categories returns 401
+    Given I am not authenticated
+    When I send a GET request to the categories endpoint without auth
+    Then the API response status should be 401
