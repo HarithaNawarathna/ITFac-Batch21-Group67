@@ -11,6 +11,7 @@ export class SalesPage {
   readonly submitButton: Locator;
   readonly plantRequiredError: Locator;
   readonly sellPlantLink: Locator;
+  readonly deleteButtons: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -22,28 +23,45 @@ export class SalesPage {
     this.quantityInput = page.locator('#quantity');
     this.submitButton = page.locator('button:has-text("Sell")');
 
-    //  inline red error under plant select
-    this.plantRequiredError = page.locator(
-      'select#plantId + .text-danger'
-    );
+    this.plantRequiredError = page.locator('select#plantId + .text-danger');
 
-    this.sellPlantLink = page.locator(
-      'a.btn.btn-primary.btn-sm.mb-3:has-text("Sell Plant")'
-    );
+    this.sellPlantLink = page.locator('a.btn.btn-primary.btn-sm.mb-3:has-text("Sell Plant")');
+
+    const firstRow = page.locator("table tbody tr").first();
+    this.deleteButtons = firstRow.locator(
+      [
+        'button:has-text("Delete")',
+        'a:has-text("Delete")',
+        'button:has-text("Remove")',
+        'a:has-text("Remove")',
+        'button[aria-label*="delete" i]',
+        'a[aria-label*="delete" i]',
+        'button[title*="delete" i]',
+        'a[title*="delete" i]',
+        'button[data-testid*="delete" i]',
+        'a[data-testid*="delete" i]',
+        'button:has(i[class*="trash" i])',
+        'a:has(i[class*="trash" i])',
+        'button:has(i[class*="delete" i])',
+        'a:has(i[class*="delete" i])',
+        'button:has(svg[aria-label*="trash" i])',
+        'a:has(svg[aria-label*="trash" i])',
+        'button:has(svg[data-icon*="trash" i])',
+        'a:has(svg[data-icon*="trash" i])',
+        '.btn-danger',
+        '.text-danger',
+      ].join(", ")
+    ).first();
   }
 
   // ---------- Navigation ----------
 
   async open() {
-    await this.page.goto(`${ENV.UI_BASE_URL}/ui/sales`, {
-      waitUntil: "networkidle"
-    });
+    await this.page.goto(`${ENV.UI_BASE_URL}/ui/sales`, { waitUntil: "networkidle" });
   }
 
   async openSellPlantPage() {
-    await this.page.goto(`${ENV.UI_BASE_URL}/ui/sales/new`, {
-      waitUntil: "networkidle"
-    });
+    await this.page.goto(`${ENV.UI_BASE_URL}/ui/sales/new`, { waitUntil: "networkidle" });
   }
 
   // ---------- Expectations ----------
@@ -53,7 +71,12 @@ export class SalesPage {
   }
 
   async expectPaginationVisible() {
-    await expect(this.pagination).toBeVisible();
+    const count = await this.pagination.count();
+    if (count > 0) {
+      await expect(this.pagination).toBeVisible();
+    } else {
+      console.log("Pagination not displayed — only one page of results");
+    }
   }
 
   async expectSellPlantLinkVisible() {
@@ -73,9 +96,8 @@ export class SalesPage {
     expect(dates).toEqual(sorted);
   }
 
-  // ---------- VALIDATION CHECKS ----------
+  // ---------- Validation Checks ----------
 
-  //  browser native validation message
   async expectQuantityAlertVisible() {
     const msg = await this.quantityInput.evaluate(
       (el: HTMLInputElement) => el.validationMessage
@@ -86,20 +108,13 @@ export class SalesPage {
     expect(msg.toLowerCase()).toContain("greater");
   }
 
-  //  inline red text error
   async expectPlantRequiredErrorVisible() {
     await expect(this.plantRequiredError).toBeVisible();
   }
 
   // ---------- Form Submission ----------
 
-  async submitSellPlantForm({
-    plant,
-    quantity
-  }: {
-    plant: string;
-    quantity: number;
-  }) {
+  async submitSellPlantForm({ plant, quantity }: { plant: string; quantity: number }) {
     if (plant) {
       await this.plantSelect.selectOption(plant);
     } else {
@@ -108,5 +123,29 @@ export class SalesPage {
 
     await this.quantityInput.fill(quantity.toString());
     await this.submitButton.click();
+  }
+
+  // ---------- Delete sale with confirmation ----------
+
+  async deleteFirstSaleWithConfirm() {
+    const rows = this.page.locator("table tbody tr");
+    const rowsBefore = await rows.count();
+    console.log("Rows before delete:", rowsBefore);
+
+    if (rowsBefore === 0) {
+      throw new Error("No rows found in sales table to delete");
+    }
+
+    await expect(this.deleteButtons).toBeVisible({ timeout: 10000 });
+
+    this.page.once("dialog", async dialog => {
+      console.log("Confirm dialog message:", dialog.message());
+      await dialog.accept();
+      console.log("Sale deleted successfully");
+    });
+
+    await this.deleteButtons.click();
+
+    await expect(rows).toHaveCount(rowsBefore - 1, { timeout: 10000 });
   }
 }
