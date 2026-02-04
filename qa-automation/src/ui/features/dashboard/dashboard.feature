@@ -51,3 +51,12 @@ Feature: Dashboard UI Tests
     Given I am not logged in
     When I try to access the dashboard directly
     Then I should be redirected to the login page
+
+# TC_UI_29: Dashboard Displays Navigation Menu
+  @TC_UI_29
+  Scenario: Dashboard displays navigation menu with all sections
+    Given I am logged in as admin
+    Then I should see the navigation menu
+    And the navigation menu should contain "Categories"
+    And the navigation menu should contain "Plants"
+    And the navigation menu should contain "Sales"
