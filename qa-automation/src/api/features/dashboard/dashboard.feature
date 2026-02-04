@@ -39,4 +39,10 @@ Feature: Dashboard API Tests
     When I send a GET request to the plants endpoint
     Then the API response status should be 200
 
-    
+# TC_API_37: Get All Sales for Dashboard Display
+  @TC_API_37
+  Scenario: Admin can fetch all sales for dashboard
+    Given Admin authenticated
+    When I send a GET request to the sales endpoint
+    Then the API response status should be 200
+    And the response should be an array
