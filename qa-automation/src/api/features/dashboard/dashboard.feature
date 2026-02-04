@@ -61,3 +61,10 @@ Feature: Dashboard API Tests
     When I send a GET request to the categories endpoint
     Then the API response status should be 200
     And the response should be an array
+
+# TC_API_40: Read-Only User Cannot Create Category
+  @TC_API_40
+  Scenario: Read-only user cannot create category (bad request)
+    Given User authenticated
+    When I try to create a category with name "TestForbidden"
+    Then the API response status should be 400
