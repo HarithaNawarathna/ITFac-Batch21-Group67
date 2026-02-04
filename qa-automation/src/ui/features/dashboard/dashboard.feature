@@ -60,3 +60,11 @@ Feature: Dashboard UI Tests
     And the navigation menu should contain "Categories"
     And the navigation menu should contain "Plants"
     And the navigation menu should contain "Sales"
+
+# TC_UI_30: Dashboard Session Persistence
+  @TC_UI_30
+  Scenario: Dashboard maintains session after page refresh
+    Given I am logged in as admin
+    When I refresh the page
+    Then I should still be on the dashboard
+    And I should not be redirected to the login page
