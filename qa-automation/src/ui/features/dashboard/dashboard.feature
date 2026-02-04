@@ -8,3 +8,11 @@ Feature: Dashboard UI Tests
     When I login as "admin"
     Then I should be on the dashboard
     And the page title should contain "Dashboard"
+
+# TC_UI_23: Dashboard Load After User Login
+  @TC_UI_23
+  Scenario: User dashboard loads successfully after login
+    Given I am on the login page
+    When I login as "user"
+    Then I should be on the dashboard
+    And the page title should contain "Dashboard"
