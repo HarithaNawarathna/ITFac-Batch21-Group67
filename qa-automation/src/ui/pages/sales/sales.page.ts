@@ -125,6 +125,53 @@ export class SalesPage {
     await this.submitButton.click();
   }
 
+  // ---------- TC_UI_006: Select plant with stock and get initial stock ----------
+
+  async selectPlantWithStock(): Promise<{ plantId: string; plantName: string; initialStock: number }> {
+    const options = await this.plantSelect.locator('option').allTextContents();
+
+    for (let i = 1; i < options.length; i++) {
+      const optionText = options[i];
+      const stockRegex = /stock:\s*(\d+)/i;
+      const stockMatch = stockRegex.exec(optionText);
+
+      if (stockMatch && Number.parseInt(stockMatch[1], 10) > 0) {
+        const optionValue = await this.plantSelect.locator('option').nth(i).getAttribute('value');
+        await this.plantSelect.selectOption(optionValue || '');
+
+        const namePart = optionText.split(/stock:/i)[0];
+        const plantName = namePart.replace(/[\(\-:]+$/g, "").trim() || optionText.trim();
+
+        return {
+          plantId: optionValue || '',
+          plantName,
+          initialStock: Number.parseInt(stockMatch[1], 10)
+        };
+      }
+    }
+
+    throw new Error("No plants with stock >= 1 found");
+  }
+
+  async getPlantStockByName(plantName: string): Promise<number> {
+    await this.page.goto(`${ENV.UI_BASE_URL}/ui/plants`, { waitUntil: "networkidle" });
+
+    const row = this.page.locator(`table tbody tr:has(td:has-text("${plantName}"))`).first();
+    await expect(row).toBeVisible();
+
+    const preferredStockCell = row.locator('td.stock, td.quantity, td[data-label*="stock" i]').first();
+    const hasPreferred = (await preferredStockCell.count()) > 0;
+
+    const stockCell = hasPreferred ? preferredStockCell : row.locator('td').nth(3);
+    const stockText = await stockCell.innerText();
+
+    return Number.parseInt(stockText.trim(), 10);
+  }
+
+  async expectRedirectedToSalesList() {
+    await expect(this.page).toHaveURL(/\/ui\/sales/, { timeout: 10000 });
+  }
+
   // ---------- Delete sale with confirmation ----------
 
   async deleteFirstSaleWithConfirm() {

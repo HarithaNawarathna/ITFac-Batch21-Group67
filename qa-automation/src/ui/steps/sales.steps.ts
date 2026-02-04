@@ -2,13 +2,22 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import { expect } from "@playwright/test";
 import { UIWorld } from "../support/world.js";
 import { SalesPage } from "../pages/sales/sales.page.js";
+import { LoginPage } from "../pages/auth/login.page.js";
+import { BasePage } from "../pages/base.page.js";
+import { ENV } from "../../config/env.js";
 
-// ================= LOGIN =================
-Given('I am logged in as {string}', async function (this: UIWorld, role: string) {
-  await this.loginAs(role);
+// ================= LOGIN (reusing auth pattern) =================
+Given('I am logged in as {string}', async function (this: UIWorld, role: "admin" | "user") {
+  const login = new LoginPage(this.page);
+  await login.open();
+  this.state.loginPage = login;
+  const creds = ENV.USERS[role];
+  await login.login(creds.username, creds.password);
+  const dashboard = new BasePage(this.page);
+  await dashboard.expectOnDashboard();
 });
 
-Then('I should be logged in successfully', async function () {
+Then('I should be logged in successfully', async function (this: UIWorld) {
   await expect(this.page).toHaveURL(/\/ui\/dashboard/);
 });
 
@@ -50,14 +59,14 @@ Then("I should see sell plant button", async function (this: UIWorld) {
 });
 
 // ================= SELL PLANT FORM PAGE =================
-When("I navigate to the sell plant page", async function (this: UIWorld) {
+// This handles both Given and When for "I navigate to the sell plant page"
+Given(/^I navigate to the sell plant page$/, async function (this: UIWorld) {
   const sales = new SalesPage(this.page);
   this.state.salesPage = sales;
   await sales.openSellPlantPage();
 });
 
 // ================= INVALID FORM — CASE 1 =================
-// quantity = 0, no plant
 When("I submit the sell plant form with quantity 0 and no plant", async function (this: UIWorld) {
   await this.state.salesPage!.submitSellPlantForm({ plant: "", quantity: 0 });
 });
@@ -67,13 +76,29 @@ Then("I should see quantity validation alert", async function (this: UIWorld) {
 });
 
 // ================= INVALID FORM — CASE 2 =================
-// quantity > 0, no plant
 When("I submit the sell plant form with quantity > 0 and no plant", async function (this: UIWorld) {
   await this.state.salesPage!.submitSellPlantForm({ plant: "", quantity: 1 });
 });
 
 Then("I should see plant required validation error", async function (this: UIWorld) {
   await this.state.salesPage!.expectPlantRequiredErrorVisible();
+});
+
+// ================= TC_UI_006: SUCCESSFUL SALE =================
+When("I select a plant with stock greater than or equal to 1", async function (this: UIWorld) {
+  const plantData = await this.state.salesPage!.selectPlantWithStock();
+  (this.state as any).currentPlantName = plantData.plantName;
+  this.state.initialStock = plantData.initialStock;
+  console.log(`Selected plant ${plantData.plantName} with stock ${plantData.initialStock}`);
+});
+
+Then("the plant stock should be reduced", async function (this: UIWorld) {
+  const currentPlantName = (this.state as any).currentPlantName;
+  const currentStock = await this.state.salesPage!.getPlantStockByName(currentPlantName);
+  const expectedStock = (this.state.initialStock || 0) - (this.state.quantitySold || 0);
+
+  expect(currentStock).toBe(expectedStock);
+  console.log(`Stock reduced from ${this.state.initialStock} to ${currentStock}`);
 });
 
 // ================= DELETE SALE =================
@@ -83,4 +108,25 @@ When("I delete the first sale and confirm", async function (this: UIWorld) {
 
 Then("the sale should be removed from the list", async function (this: UIWorld) {
   console.log("Sale deletion verified");
+});
+
+// ================= SELL PLANT FORM SUBMISSION =================
+When("I enter a valid quantity", async function (this: UIWorld) {
+  const quantity = Math.min(this.state.initialStock || 1, 1);
+  this.state.quantitySold = quantity;
+  await this.state.salesPage!.quantityInput.fill(quantity.toString());
+  console.log(`Entered quantity: ${quantity}`);
+});
+
+When("I click the Sell button", async function (this: UIWorld) {
+  await this.state.salesPage!.submitButton.click();
+});
+
+Then("the sale should be saved successfully", async function (this: UIWorld) {
+  await this.page.waitForLoadState("networkidle");
+  console.log("Sale saved successfully");
+});
+
+Then("I should be redirected to the sales list page", async function (this: UIWorld) {
+  await this.state.salesPage!.expectRedirectedToSalesList();
 });

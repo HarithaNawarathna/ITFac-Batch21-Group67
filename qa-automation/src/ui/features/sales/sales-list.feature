@@ -14,7 +14,6 @@ Scenario: TC_UI_002 Default sorting by sold date DESC
   When I navigate to the sales page
   Then sales should be sorted by sold date descending
 
-
 @tc005
 Scenario: TC_UI_005 - Delete sale with confirmation
   Given I am logged in as "admin"
@@ -25,3 +24,11 @@ Scenario: TC_UI_005 - Delete sale with confirmation
 
   When I delete the first sale and confirm
   Then the sale should be removed from the list
+
+@tc007
+Scenario: TC_UI_007 - User can view sales list page
+  Given I am logged in as "user"
+  Then I should be logged in successfully
+  When I navigate to the sales page
+  Then I should see the sales list
+  And I should see pagination controls if there are multiple pages

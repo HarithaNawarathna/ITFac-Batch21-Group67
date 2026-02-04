@@ -7,6 +7,9 @@ import { LoginPage as LoginPageClass } from "../pages/auth/login.page.js";
 import { BasePage } from "../pages/base.page.js";
 
 export interface UIWorldState {
+  selectedPlantId(selectedPlantId: any): unknown;
+  quantitySold: any;
+  initialStock: any;
   loginPage?: LoginPage;
   salesPage?: SalesPage;
 }
