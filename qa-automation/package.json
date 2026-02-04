@@ -1,0 +1,30 @@
+{
+  "name": "qa-automation",
+  "version": "1.0.0",
+  "description": "QA automation with Playwright and Cucumber",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:ui": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.js",
+    "test:ui:headed": "HEADED=1 node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.js",
+    "test:ui:login": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/ui/features/auth/login.feature --config cucumber.js",
+    "test:ui:login:headed": "HEADED=1 node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/ui/features/auth/login.feature --config cucumber.js",
+    "test:api": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.api.js",
+    "test:api:login": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/api/features/auth/login.feature --config cucumber.api.js",
+    "test:all": "npm run test:ui && npm run test:api",
+    "report:ui": "./scripts/generate-ui-allure.sh",
+    "report:api": "./scripts/generate-api-allure.sh"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^11.0.0",
+    "@playwright/test": "^1.49.0",
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "allure-playwright": "^3.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
