@@ -7,3 +7,12 @@ Feature: Dashboard API Tests
     Given Admin authenticated
     When I send a GET request to the health endpoint
     Then the API response status should be 200
+
+     # TC_API_33: Plant Summary Endpoint for Admin
+  @TC_API_33
+  Scenario: Admin can fetch plant summary for dashboard
+    Given Admin authenticated
+    When I send a GET request to the plants summary endpoint
+    Then the API response status should be 200
+    And the response should contain "totalPlants"
+    And the response should contain "lowStockPlants"
