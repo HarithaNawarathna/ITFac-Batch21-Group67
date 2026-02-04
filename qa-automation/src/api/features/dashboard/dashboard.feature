@@ -53,3 +53,11 @@ Feature: Dashboard API Tests
     Given I am not authenticated
     When I send a GET request to the categories endpoint without auth
     Then the API response status should be 401
+
+# TC_API_39: Read-Only User Can Fetch Categories
+  @TC_API_39
+  Scenario: Read-only user can fetch categories for dashboard
+    Given User authenticated
+    When I send a GET request to the categories endpoint
+    Then the API response status should be 200
+    And the response should be an array
