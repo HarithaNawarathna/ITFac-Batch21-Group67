@@ -38,3 +38,5 @@ Feature: Dashboard API Tests
     Given Admin authenticated
     When I send a GET request to the plants endpoint
     Then the API response status should be 200
+
+    
