@@ -37,3 +37,10 @@ Feature: Dashboard UI Tests
     Given I am logged in as admin
     When I click on the sales navigation link
     Then I should be on the sales page
+    
+# TC_UI_27: Dashboard Logout Functionality
+  @TC_UI_27
+  Scenario: User can logout from dashboard
+    Given I am logged in as admin
+    When I click the logout button
+    Then I should be redirected to the login page
