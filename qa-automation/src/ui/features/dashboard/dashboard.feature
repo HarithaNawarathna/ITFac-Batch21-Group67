@@ -68,3 +68,11 @@ Feature: Dashboard UI Tests
     When I refresh the page
     Then I should still be on the dashboard
     And I should not be redirected to the login page
+
+# TC_UI_31: Dashboard Role-Based Access for Read-Only User
+  @TC_UI_31
+  Scenario: Read-only user can view dashboard but has limited actions
+    Given I am on the login page
+    When I login as "user"
+    Then I should be on the dashboard
+    And I should see the navigation menu
