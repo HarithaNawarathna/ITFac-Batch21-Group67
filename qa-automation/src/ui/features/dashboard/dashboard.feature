@@ -16,3 +16,10 @@ Feature: Dashboard UI Tests
     When I login as "user"
     Then I should be on the dashboard
     And the page title should contain "Dashboard"
+
+# TC_UI_24: Dashboard Navigation to Categories
+  @TC_UI_24
+  Scenario: Admin can navigate from dashboard to categories page
+    Given I am logged in as admin
+    When I click on the categories navigation link
+    Then I should be on the category page
