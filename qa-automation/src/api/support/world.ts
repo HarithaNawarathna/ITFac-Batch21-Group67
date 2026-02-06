@@ -8,6 +8,8 @@ import { AxiosResponse } from "axios";
 export class APIWorld extends World {
   lastResponse: AxiosResponse | null = null;
   authToken: string | null = null;
+
+   multipleResponses: AxiosResponse[] = [];
   /** Set when a category is created so After hook can delete it. */
   createdCategoryId: string | null = null;
 
