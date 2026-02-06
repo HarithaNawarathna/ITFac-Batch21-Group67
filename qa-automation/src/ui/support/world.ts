@@ -18,7 +18,13 @@ export class UIWorld extends World {
   declare page: Page;
   declare context: BrowserContext;
   declare browser: Browser;
-  state: UIWorldState = {};
+  state: UIWorldState = {
+    selectedPlantId: function (selectedPlantId: any): unknown {
+      throw new Error("Function not implemented.");
+    },
+    quantitySold: undefined,
+    initialStock: undefined
+  };
 
   constructor(options: IWorldOptions) {
     super(options);

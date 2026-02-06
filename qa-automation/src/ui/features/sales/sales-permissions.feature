@@ -7,3 +7,11 @@ Feature: Sales permissions
     Then I should be logged in successfully
     When I navigate to the sales page
     Then I should see sell plant button
+
+  @tc010
+  Scenario: TC_UI_010 - Restricted actions visibility for user role
+    Given I am logged in as "user"
+    Then I should be logged in successfully
+    When I navigate to the sales page
+    Then I should not see sell plant button
+    And I should not see delete action on sales rows

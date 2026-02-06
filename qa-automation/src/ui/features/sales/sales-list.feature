@@ -32,3 +32,15 @@ Scenario: TC_UI_007 - User can view sales list page
   When I navigate to the sales page
   Then I should see the sales list
   And I should see pagination controls if there are multiple pages
+
+@tc009
+Scenario: TC_UI_009 - Verify sorting options
+  Given I am logged in as "admin"
+  When I navigate to the sales page
+  Then I should see the sales list
+  When I click the Plant column header
+  Then the sales should be sorted by plant name
+  When I click the Quantity column header
+  Then the sales should be sorted by quantity
+  When I click the Total Price column header
+  Then the sales should be sorted by total price

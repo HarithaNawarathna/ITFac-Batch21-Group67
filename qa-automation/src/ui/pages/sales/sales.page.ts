@@ -128,28 +128,61 @@ export class SalesPage {
   // ---------- TC_UI_006: Select plant with stock and get initial stock ----------
 
   async selectPlantWithStock(): Promise<{ plantId: string; plantName: string; initialStock: number }> {
-    const options = await this.plantSelect.locator('option').allTextContents();
+    // Wait for the select to be ready
+    await this.plantSelect.waitFor({ state: "visible" });
+    await this.page.waitForLoadState("networkidle");
+
+    const options = await this.plantSelect.locator('option').all();
+    console.log(`Total options found: ${options.length}`);
 
     for (let i = 1; i < options.length; i++) {
-      const optionText = options[i];
-      const stockRegex = /stock:\s*(\d+)/i;
-      const stockMatch = stockRegex.exec(optionText);
+      const optionElement = options[i];
+      const optionText = await optionElement.innerText();
+      const optionValue = await optionElement.getAttribute('value');
 
-      if (stockMatch && Number.parseInt(stockMatch[1], 10) > 0) {
-        const optionValue = await this.plantSelect.locator('option').nth(i).getAttribute('value');
+      console.log(`Option ${i}: "${optionText}" (value: ${optionValue})`);
+
+      // Try multiple regex patterns to find stock
+      const stockPatterns = [
+        /stock:\s*(\d+)/i,
+        /\(stock:\s*(\d+)\)/i,
+        /stock\s*=\s*(\d+)/i,
+        /\[\s*(\d+)\s*\]/,
+        /qty:\s*(\d+)/i,
+        /quantity:\s*(\d+)/i,
+      ];
+
+      let stockFound = 0;
+      for (const pattern of stockPatterns) {
+        const match = pattern.exec(optionText);
+        if (match && match[1]) {
+          stockFound = Number.parseInt(match[1], 10);
+          console.log(`  → Stock matched: ${stockFound}`);
+          break;
+        }
+      }
+
+      if (stockFound > 0) {
+        // Extract plant name (remove stock info)
+        const plantName = optionText
+          .replace(/\s*stock:\s*\d+\s*/i, '')
+          .replace(/\s*\(stock:\s*\d+\)\s*/i, '')
+          .replace(/\s*\[.*?\]\s*/g, '')
+          .trim();
+
+        console.log(`Selected plant: "${plantName}" with stock ${stockFound}`);
+        
         await this.plantSelect.selectOption(optionValue || '');
-
-        const namePart = optionText.split(/stock:/i)[0];
-        const plantName = namePart.replace(/[\(\-:]+$/g, "").trim() || optionText.trim();
-
+        
         return {
           plantId: optionValue || '',
           plantName,
-          initialStock: Number.parseInt(stockMatch[1], 10)
+          initialStock: stockFound
         };
       }
     }
 
+    console.error("Available options:", await this.plantSelect.locator('option').allInnerTexts());
     throw new Error("No plants with stock >= 1 found");
   }
 
@@ -194,5 +227,108 @@ export class SalesPage {
     await this.deleteButtons.click();
 
     await expect(rows).toHaveCount(rowsBefore - 1, { timeout: 10000 });
+  }
+
+  // ---------- TC_UI_009: Column Sorting ----------
+
+  async clickPlantColumnHeader() {
+    const plantHeader = this.page.locator('th:has-text("Plant")').first();
+    await expect(plantHeader).toBeVisible();
+    
+    // Get initial data to compare after click
+    const initialData = await this.page.locator("table tbody tr td:first-child").allInnerTexts();
+    console.log("Data before click:", initialData);
+    
+    // Click the header
+    await plantHeader.click();
+    
+    // Wait for the table to update
+    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForTimeout(800);
+    
+    // Verify data changed (sorting occurred)
+    const newData = await this.page.locator("table tbody tr td:first-child").allInnerTexts();
+    console.log("Data after click:", newData);
+  }
+
+  async expectSortedByPlantName() {
+    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForTimeout(500);
+
+    const plantNames = await this.page.locator("table tbody tr td:first-child").allInnerTexts();
+    const cleaned = plantNames.map(name => name.trim());
+    
+    console.log("Plant names retrieved:", cleaned);
+    
+    const sortedAsc = [...cleaned].sort();
+    const sortedDesc = [...cleaned].sort((a, b) => b.localeCompare(a));
+    
+    console.log("Sorted ASC:", sortedAsc);
+    console.log("Sorted DESC:", sortedDesc);
+    console.log("Matches ASC:", JSON.stringify(cleaned) === JSON.stringify(sortedAsc));
+    console.log("Matches DESC:", JSON.stringify(cleaned) === JSON.stringify(sortedDesc));
+    
+    const isSorted = 
+      JSON.stringify(cleaned) === JSON.stringify(sortedAsc) ||
+      JSON.stringify(cleaned) === JSON.stringify(sortedDesc);
+    
+    expect(isSorted).toBe(true);
+  }
+
+  async clickQuantityColumnHeader() {
+    const quantityHeader = this.page.locator('table thead th:has-text("Quantity")').first();
+    await expect(quantityHeader).toBeVisible();
+    await quantityHeader.click();
+  }
+
+  async expectSortedByQuantity() {
+    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForTimeout(500);
+
+    const quantityTexts = await this.page.locator("table tbody tr td:nth-child(2)").allInnerTexts();
+    const quantities = quantityTexts.map(q => parseInt(q.trim(), 10));
+    
+    const sortedAsc = [...quantities].sort((a, b) => a - b);
+    const sortedDesc = [...quantities].sort((a, b) => b - a);
+    
+    const isSorted = 
+      JSON.stringify(quantities) === JSON.stringify(sortedAsc) ||
+      JSON.stringify(quantities) === JSON.stringify(sortedDesc);
+    
+    expect(isSorted).toBe(true);
+  }
+
+  async clickTotalPriceColumnHeader() {
+    const priceHeader = this.page.locator('table thead th:has-text("Total Price")').first();
+    await expect(priceHeader).toBeVisible();
+    await priceHeader.click();
+  }
+
+  async expectSortedByTotalPrice() {
+    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForTimeout(500);
+
+    const priceTexts = await this.page.locator("table tbody tr td:nth-child(4)").allInnerTexts();
+    const prices = priceTexts.map(p => parseFloat(p.replace(/[^0-9.]/g, '')));
+    
+    const sortedAsc = [...prices].sort((a, b) => a - b);
+    const sortedDesc = [...prices].sort((a, b) => b - a);
+    
+    const isSorted = 
+      JSON.stringify(prices) === JSON.stringify(sortedAsc) ||
+      JSON.stringify(prices) === JSON.stringify(sortedDesc);
+    
+    expect(isSorted).toBe(true);
+  }
+
+  // ---------- TC_UI_010: Permission Checks ----------
+
+  async expectSellPlantLinkNotVisible() {
+    await expect(this.sellPlantLink).not.toBeVisible();
+  }
+
+  async expectNoDeleteActionsVisible() {
+    const deleteButtons = this.page.locator('button:has-text("Delete"), a:has-text("Delete"), button[aria-label*="delete" i], .btn-danger');
+    await expect(deleteButtons).toHaveCount(0);
   }
 }

@@ -130,3 +130,37 @@ Then("the sale should be saved successfully", async function (this: UIWorld) {
 Then("I should be redirected to the sales list page", async function (this: UIWorld) {
   await this.state.salesPage!.expectRedirectedToSalesList();
 });
+
+// ================= TC_UI_009: SORTING OPTIONS =================
+When("I click the Plant column header", async function (this: UIWorld) {
+  await this.state.salesPage!.clickPlantColumnHeader();
+});
+
+Then("the sales should be sorted by plant name", async function (this: UIWorld) {
+  await this.state.salesPage!.expectSortedByPlantName();
+});
+
+When("I click the Quantity column header", async function (this: UIWorld) {
+  await this.state.salesPage!.clickQuantityColumnHeader();
+});
+
+Then("the sales should be sorted by quantity", async function (this: UIWorld) {
+  await this.state.salesPage!.expectSortedByQuantity();
+});
+
+When("I click the Total Price column header", async function (this: UIWorld) {
+  await this.state.salesPage!.clickTotalPriceColumnHeader();
+});
+
+Then("the sales should be sorted by total price", async function (this: UIWorld) {
+  await this.state.salesPage!.expectSortedByTotalPrice();
+});
+
+// ================= TC_UI_010: PERMISSION RESTRICTIONS =================
+Then("I should not see sell plant button", async function (this: UIWorld) {
+  await this.state.salesPage!.expectSellPlantLinkNotVisible();
+});
+
+Then("I should not see delete action on sales rows", async function (this: UIWorld) {
+  await this.state.salesPage!.expectNoDeleteActionsVisible();
+});
