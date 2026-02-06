@@ -22,7 +22,7 @@ Feature: Plant List
     And I click the Add Plant button
     And I enter valid plant details
       | name       | category | price  | quantity |
-      | Vff Plant | AsusLap  | 25.99  | 50       |
+      | Scc Plant | AsusLap  | 25.99  | 50       |
     And I click Save
     Then I should see an add success message
     And the new plant should appear in the plant list
@@ -34,7 +34,7 @@ Scenario: Edit existing plant
     Then I should be on the Edit Plant page
     When I modify plant details
       | name          | category | price  | quantity |
-      | Kll Plant | AsusLap  | 35.99  | 75       |
+      | Gt Plant | AsusLap  | 35.99  | 75       |
     And I click Save button
     Then I should see an edit success message
     And the updated plant details should be reflected in the plant list

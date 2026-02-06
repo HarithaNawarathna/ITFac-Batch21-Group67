@@ -10,6 +10,8 @@ export class APIWorld extends World {
   authToken: string | null = null;
   /** Set when a category is created so After hook can delete it. */
   createdCategoryId: string | null = null;
+  createdPlantId: string | null = null;
+  deletedPlantId?: number;
 
   constructor(options: IWorldOptions) {
     super(options);
