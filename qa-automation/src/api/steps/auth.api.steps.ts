@@ -1,9 +1,11 @@
 import { Given, When, Then } from "@cucumber/cucumber";
+import { DataTable } from "@cucumber/cucumber";
 import { expect } from "@playwright/test";
 import axios from "axios";
 import { login } from "../clients/auth.client.js";
 import { ENV } from "../../config/env.js";
 import type { APIWorld } from "../support/world.js";
+import { jwtDecode } from "jwt-decode";
 
 Given("Admin authenticated", async function (this: APIWorld) {
   const creds = ENV.USERS.admin;
@@ -32,43 +34,63 @@ Given("User authenticated", async function (this: APIWorld) {
 });
 
 When(
-  "I login via API as {string}",
-  async function (this: APIWorld, role: "admin" | "user") {
-    const creds = ENV.USERS[role];
-    this.lastResponse = await login(creds.username, creds.password);
-  }
-);
+  "I login via API with following credentials",
+  async function (this: APIWorld, table: DataTable) {
+    const users = table.hashes();
+    this.multipleResponses = [];
 
-When(
-  "I login via API with username {string} and password {string}",
-  async function (this: APIWorld, username: string, password: string) {
-    try {
-      this.lastResponse = await login(username, password);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
+    for (const user of users) {
+      const username = user.username || "";
+      const password = user.password || "";
+
+      try {
+        const response = await login(username, password);
+        this.multipleResponses.push(response);
+      } catch (err) {
+        // If axios error with response (like 401), store the response
+        if (axios.isAxiosError(err) && err.response) {
+          this.multipleResponses.push(err.response);
+        } else {
+          throw err;
+        }
       }
     }
   }
 );
 
 Then(
-  "the login response status is {int}",
-  async function (this: APIWorld, status: number) {
-    expect(this.lastResponse).not.toBeNull();
-    const response = this.lastResponse;
-    if (!response) throw new Error("Expected response");
-    expect(response.status).toBe(status);
+  "each login response status should be {int}",
+  function (this: APIWorld, status: number) {
+    for (const response of this.multipleResponses) {
+      expect(response.status).toBe(status);
+    }
   }
 );
 
-Then("the response contains a token", async function (this: APIWorld) {
-  expect(this.lastResponse).not.toBeNull();
-  const response = this.lastResponse;
-  if (!response) throw new Error("Expected response");
-  const data = response.data as Record<string, unknown>;
-  expect(data).toHaveProperty("token");
-  expect(data.token).toBeTruthy();
+Then(
+  "each response should contain a token",
+  function (this: APIWorld) {
+    for (const response of this.multipleResponses) {
+      const data = response.data as Record<string, unknown>;
+      expect(data).toHaveProperty("token");
+      expect(data.token).toBeTruthy();
+    }
+  }
+);
+
+Then("each response token should contain the correct role", function (this: APIWorld) {
+  for (const response of this.multipleResponses) {
+    const data = response.data as Record<string, any>;
+    const token = data.token as string;
+    expect(token).toBeTruthy();
+
+    // Decode JWT to read claims
+    const decoded: any = jwtDecode(token);
+
+    // Get expected role from the response object
+    const expectedRole = response.expectedRole;
+
+    // Compare role in JWT with expectedRole
+    expect(decoded.role).toBe(expectedRole);
+  }
 });
