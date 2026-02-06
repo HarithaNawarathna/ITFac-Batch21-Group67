@@ -38,3 +38,31 @@ Feature: Plants API
     When I delete plant with ID 48
     Then the response status is 204
     And plant is removed from database
+
+Scenario: TC_API_36 - View plant list
+    Given User authenticated
+    When I send GET request to "/api/plants"
+    Then the response status is 200
+    And the plant list is returned in response body
+
+Scenario: TC_API_37 - Get plant by valid ID
+    Given User authenticated
+    And a plant exists with ID 51
+    When I send GET request to view details for plant 51
+    Then the response status is 200
+    And the response contains correct details for plant 51
+
+Scenario: TC_API_38 - Get plants by category ID
+    Given User authenticated
+    When I send GET request to "/api/plants/category/4"
+    Then the response status is 200
+    And the response contains plants from category
+
+Scenario: TC_API_39 - Access API without authentication
+    When I send GET request to "/api/plants" without authentication
+    Then the response status is 401
+
+Scenario: TC_API_40 - Get plant by invalid ID
+    Given User authenticated
+    When I send GET request to view details for plant 99999 
+    Then the response status is 404

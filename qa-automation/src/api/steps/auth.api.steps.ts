@@ -44,6 +44,19 @@ Given("User authenticated", async function (this: APIWorld) {
   expect(this.authToken).toBeTruthy();
 });
 
+Given("User authenticated", async function (this: APIWorld) {
+  const creds = ENV.USERS.user;
+  this.lastResponse = await login(creds.username, creds.password);
+
+  const response = this.lastResponse;
+  expect(response?.status).toBe(200);
+  if (!response) throw new Error("Expected login response");
+
+  const data = response.data as Record<string, unknown>;
+  this.authToken = (data.token as string) ?? null;
+  expect(this.authToken).toBeTruthy();
+});
+
 When(
   "I login via API with following credentials",
   async function (this: APIWorld, table: DataTable) {

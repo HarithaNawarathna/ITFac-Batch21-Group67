@@ -75,3 +75,15 @@ export async function deletePlant(
     }
   );
 }
+
+export async function getPlantsByCategory(
+  endpoint: string,
+  token: string
+): Promise<AxiosResponse> {
+  return axios.get(
+    `${baseURL}${endpoint}`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+}
