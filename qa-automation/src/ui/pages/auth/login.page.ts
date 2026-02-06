@@ -56,4 +56,26 @@ export class LoginPage {
   async expectRedirectedFromLogin() {
     await expect(this.page).not.toHaveURL(/\/ui\/login/);
   }
+
+  async expectGlobalErrorMessage(message: string) {
+    await expect(this.alert).toBeVisible();
+    await expect(this.alert.first()).toContainText(message);
+  }
+
+  async expectLoginButtonVisible() {
+    await expect(this.loginButton).toBeVisible();
+  }
+
+  async expectLoginButtonEnabled() {
+    await expect(this.loginButton).toBeEnabled();
+  }
+
+  async expectLoginButtonText(text: string) {
+    await expect(this.loginButton).toHaveText(text);
+  }
+
+  async expectErrorAlert(message: string) {
+    await expect(this.alert).toBeVisible();
+    await expect(this.alert.first()).toContainText(message);
+  }
 }
