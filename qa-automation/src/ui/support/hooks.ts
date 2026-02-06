@@ -6,7 +6,7 @@ import type { UIWorld } from "./world.js";
 dotenv.config();
 
 // Allow time for browser launch and page loads (e.g. networkidle)
-setDefaultTimeout(30_000);
+setDefaultTimeout(60_000);
 
 Before(async function (this: UIWorld) {
   const headed =
