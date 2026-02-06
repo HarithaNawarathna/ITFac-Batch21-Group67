@@ -1,14 +1,14 @@
 @ui @plants
 Feature: Plant List
 
-  Scenario: Admin can view the plant list
+  Scenario: TC_UI_32 - Admin can view the plant list
     Given I am logged in as admin
     When I navigate to the plants page
     Then I should see the plant list displayed
     And the plant table should have correct headers
     And all existing plants should be visible with correct details
 
-  Scenario: Navigate to Add Plant page
+  Scenario: TC_UI_33 - Navigate to Add Plant page
     Given I am logged in as admin
     When I navigate to the plants page
     And I click the Add Plant button
@@ -16,7 +16,7 @@ Feature: Plant List
     And all required input fields should be visible
     And the Save button should be visible
 
-  Scenario: Add new plant with valid data
+  Scenario: TC_UI_34 - Add new plant with valid data
     Given I am logged in as admin
     When I navigate to the plants page
     And I click the Add Plant button
@@ -27,7 +27,7 @@ Feature: Plant List
     Then I should see an add success message
     And the new plant should appear in the plant list
 
-Scenario: Edit existing plant
+Scenario: TC_UI_35 - Edit existing plant
     Given I am logged in as admin
     And I navigate to the plants page
     When I select an existing plant to edit and click edit button
@@ -39,7 +39,7 @@ Scenario: Edit existing plant
     Then I should see an edit success message
     And the updated plant details should be reflected in the plant list
 
-  Scenario: Delete existing plant
+  Scenario: TC_UI_36 - Delete existing plant
     Given I am logged in as admin
     And I navigate to the plants page
     When I select an existing plant to delete and click delete button
