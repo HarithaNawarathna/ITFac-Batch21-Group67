@@ -3,6 +3,7 @@ import { expect } from "@playwright/test";
 import axios from "axios";
 import { getPlants, createPlant, updatePlant, getPlantById, deletePlant } from "../clients/plants.client.js";
 import type { APIWorld } from "../support/world.js";
+import { ENV } from "../../config/env.js";
 
 let existingPlantId: number;
 
@@ -236,3 +237,47 @@ Then(
     }
   }
 );
+
+When("I send GET request to view details for plant {int}", async function (this: APIWorld, plantId: number) {
+  const token = this.authToken!;
+  try {
+    this.lastResponse = await getPlantById(token, plantId);
+  } catch (err: any) {
+    this.lastResponse = err.response;
+  }
+});
+
+Then("the response contains correct details for plant {int}", async function (this: APIWorld, plantId: number) {
+  const data = this.lastResponse?.data;
+  expect(data.id).toBe(plantId);
+  expect(data).toHaveProperty("name");
+  expect(data).toHaveProperty("categoryId");
+  expect(data).toHaveProperty("price");
+  expect(data).toHaveProperty("quantity");
+});
+
+Then("the response contains plants from category", function (this: APIWorld) {
+  const data = this.lastResponse?.data;
+  expect(data).toBeDefined();
+  expect(Array.isArray(data)).toBe(true);
+  expect(data.length).toBeGreaterThan(0);
+  
+  data.forEach((plant: any) => {
+    expect(plant).toHaveProperty("category");
+    expect(plant.category).toHaveProperty("id");
+    expect(plant.category).toHaveProperty("name");
+  });
+});
+
+When("I send GET request to {string} without authentication", async function (this: APIWorld, endpoint: string) {
+  try {
+    this.lastResponse = await axios.get(`${ENV.API_BASE_URL}${endpoint}`);
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response) {
+      this.lastResponse = err.response;
+    } else {
+      throw err;
+    }
+  }
+});
+
