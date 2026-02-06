@@ -1,46 +1,54 @@
-@ui @sales @tc001
+@ui @sales
 Feature: Sales List
 
-  Scenario: TC_UI_001 Admin can view sales list
-  
+  @TC_UI_001
+  Scenario: TC_UI_001 - View sales list (Admin)
     Given I am logged in as "admin"
+    Then I should be logged in successfully
     When I navigate to the sales page
     Then I should see the sales list
     And I should see pagination controls
 
-@ui @sales @tc002
-Scenario: TC_UI_002 Default sorting by sold date DESC
-  Given I am logged in as "admin"
-  When I navigate to the sales page
-  Then sales should be sorted by sold date descending
+  @TC_UI_002
+  Scenario: TC_UI_002 - Default sorting by sold date DESC (Admin)
+    Given I am logged in as "admin"
+    Then I should be logged in successfully
+    When I navigate to the sales page
+    Then sales should be sorted by sold date descending
 
-@tc005
-Scenario: TC_UI_005 - Delete sale with confirmation
-  Given I am logged in as "admin"
-  Then I should be logged in successfully
+  @TC_UI_005
+  Scenario: TC_UI_005 - Delete sale with confirmation (Admin)
+    Given I am logged in as "admin"
+    Then I should be logged in successfully
+    When I navigate to the sales page
+    Then I should see the sales list
+    When I delete the first sale and confirm
+    Then the sale should be removed from the list
 
-  When I navigate to the sales page
-  Then I should see the sales list
+  @TC_UI_007
+  Scenario: TC_UI_007 - View sales list (User)
+    Given I am logged in as "user"
+    Then I should be logged in successfully
+    When I navigate to the sales page
+    Then I should see the sales list
+    And I should see pagination controls if there are multiple pages
 
-  When I delete the first sale and confirm
-  Then the sale should be removed from the list
+  @TC_UI_008
+  Scenario: TC_UI_008 - Default sorting by sold date DESC (User)
+    Given I am logged in as "user"
+    Then I should be logged in successfully
+    When I navigate to the sales page
+    Then sales should be sorted by sold date descending
 
-@tc007
-Scenario: TC_UI_007 - User can view sales list page
-  Given I am logged in as "user"
-  Then I should be logged in successfully
-  When I navigate to the sales page
-  Then I should see the sales list
-  And I should see pagination controls if there are multiple pages
-
-@tc009
-Scenario: TC_UI_009 - Verify sorting options
-  Given I am logged in as "admin"
-  When I navigate to the sales page
-  Then I should see the sales list
-  When I click the Plant column header
-  Then the sales should be sorted by plant name
-  When I click the Quantity column header
-  Then the sales should be sorted by quantity
-  When I click the Total Price column header
-  Then the sales should be sorted by total price
+  @TC_UI_009
+  Scenario: TC_UI_009 - Verify sorting options (User)
+    Given I am logged in as "user"
+    Then I should be logged in successfully
+    When I navigate to the sales page
+    Then I should see the sales list
+    When I click the Plant column header
+    Then the sales should be sorted by plant name
+    When I click the Quantity column header
+    Then the sales should be sorted by quantity
+    When I click the Total Price column header
+    Then the sales should be sorted by total price

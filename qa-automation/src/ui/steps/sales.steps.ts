@@ -103,11 +103,14 @@ Then("the plant stock should be reduced", async function (this: UIWorld) {
 
 // ================= DELETE SALE =================
 When("I delete the first sale and confirm", async function (this: UIWorld) {
-  await this.state.salesPage!.deleteFirstSaleWithConfirm();
+  const result = await this.state.salesPage!.deleteFirstSaleWithConfirm();
+  (this.state as any).deletedSaleSoldAt = result.soldAt;
 });
 
 Then("the sale should be removed from the list", async function (this: UIWorld) {
-  console.log("Sale deletion verified");
+  const soldAt = (this.state as any).deletedSaleSoldAt as string;
+  await this.state.salesPage!.expectDeleteSuccessMessageVisible();
+  await this.state.salesPage!.expectSaleNotPresentBySoldAt(soldAt);
 });
 
 // ================= SELL PLANT FORM SUBMISSION =================

@@ -132,17 +132,16 @@ export class SalesPage {
     await this.plantSelect.waitFor({ state: "visible" });
     await this.page.waitForLoadState("networkidle");
 
-    const options = await this.plantSelect.locator('option').all();
+    const options = await this.plantSelect.locator("option").all();
     console.log(`Total options found: ${options.length}`);
 
     for (let i = 1; i < options.length; i++) {
       const optionElement = options[i];
       const optionText = await optionElement.innerText();
-      const optionValue = await optionElement.getAttribute('value');
+      const optionValue = await optionElement.getAttribute("value");
 
       console.log(`Option ${i}: "${optionText}" (value: ${optionValue})`);
 
-      // Try multiple regex patterns to find stock
       const stockPatterns = [
         /stock:\s*(\d+)/i,
         /\(stock:\s*(\d+)\)/i,
@@ -163,39 +162,62 @@ export class SalesPage {
       }
 
       if (stockFound > 0) {
-        // Extract plant name (remove stock info)
         const plantName = optionText
-          .replace(/\s*stock:\s*\d+\s*/i, '')
-          .replace(/\s*\(stock:\s*\d+\)\s*/i, '')
-          .replace(/\s*\[.*?\]\s*/g, '')
+          // remove any parenthetical that contains stock/qty/quantity info
+          .replace(/\([^)]*(stock|qty|quantity)\s*[:=]\s*\d+[^)]*\)/gi, "")
+          // remove inline stock/qty/quantity fragments (if not parenthesized)
+          .replace(/\b(stock|qty|quantity)\s*[:=]\s*\d+\b/gi, "")
+          // remove bracketed counts like [123]
+          .replace(/\[\s*\d+\s*\]/g, "")
+          // remove leftover empty parentheses from prior replacements
+          .replace(/\(\s*\)/g, "")
+          // normalize whitespace
+          .replace(/\s{2,}/g, " ")
           .trim();
 
         console.log(`Selected plant: "${plantName}" with stock ${stockFound}`);
-        
-        await this.plantSelect.selectOption(optionValue || '');
-        
+
+        await this.plantSelect.selectOption(optionValue || "");
+
         return {
-          plantId: optionValue || '',
+          plantId: optionValue || "",
           plantName,
-          initialStock: stockFound
+          initialStock: stockFound,
         };
       }
     }
 
-    console.error("Available options:", await this.plantSelect.locator('option').allInnerTexts());
+    console.error("Available options:", await this.plantSelect.locator("option").allInnerTexts());
     throw new Error("No plants with stock >= 1 found");
   }
 
   async getPlantStockByName(plantName: string): Promise<number> {
     await this.page.goto(`${ENV.UI_BASE_URL}/ui/plants`, { waitUntil: "networkidle" });
 
-    const row = this.page.locator(`table tbody tr:has(td:has-text("${plantName}"))`).first();
-    await expect(row).toBeVisible();
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    const preferredStockCell = row.locator('td.stock, td.quantity, td[data-label*="stock" i]').first();
+    // Prefer exact-ish match (case-insensitive), then fall back to contains
+    const exactName = new RegExp(`^\\s*${escapeRegex(plantName)}\\s*$`, "i");
+    const containsName = new RegExp(escapeRegex(plantName), "i");
+
+    let row = this.page
+      .locator("table tbody tr")
+      .filter({ has: this.page.locator("td", { hasText: exactName }) })
+      .first();
+
+    if ((await row.count()) === 0) {
+      row = this.page
+        .locator("table tbody tr")
+        .filter({ has: this.page.locator("td", { hasText: containsName }) })
+        .first();
+    }
+
+    await expect(row).toBeVisible({ timeout: 10000 });
+
+    const preferredStockCell = row.locator("td.stock, td.quantity, td[data-label*='stock' i]").first();
     const hasPreferred = (await preferredStockCell.count()) > 0;
 
-    const stockCell = hasPreferred ? preferredStockCell : row.locator('td').nth(3);
+    const stockCell = hasPreferred ? preferredStockCell : row.locator("td").nth(3);
     const stockText = await stockCell.innerText();
 
     return Number.parseInt(stockText.trim(), 10);
@@ -207,117 +229,100 @@ export class SalesPage {
 
   // ---------- Delete sale with confirmation ----------
 
-  async deleteFirstSaleWithConfirm() {
-    const rows = this.page.locator("table tbody tr");
-    const rowsBefore = await rows.count();
-    console.log("Rows before delete:", rowsBefore);
+  async deleteFirstSaleWithConfirm(): Promise<{ soldAt: string }> {
+    const firstRow = this.page.locator("table tbody tr").first();
+    await expect(firstRow).toBeVisible({ timeout: 10000 });
 
-    if (rowsBefore === 0) {
-      throw new Error("No rows found in sales table to delete");
-    }
+    // Capture a unique identifier for the row (Sold At column)
+    const soldAt = (await firstRow.locator("td:nth-child(4)").innerText()).trim();
+    console.log("Deleting sale with Sold At:", soldAt);
 
     await expect(this.deleteButtons).toBeVisible({ timeout: 10000 });
 
-    this.page.once("dialog", async dialog => {
+    this.page.once("dialog", async (dialog) => {
       console.log("Confirm dialog message:", dialog.message());
       await dialog.accept();
-      console.log("Sale deleted successfully");
     });
 
     await this.deleteButtons.click();
 
-    await expect(rows).toHaveCount(rowsBefore - 1, { timeout: 10000 });
+    // Wait for success UI (toast/alert) and verify the deleted row is gone
+    await this.expectDeleteSuccessMessageVisible();
+    await this.expectSaleNotPresentBySoldAt(soldAt);
+
+    return { soldAt };
+  }
+
+  async expectDeleteSuccessMessageVisible() {
+    const successMsg = this.page
+      .locator(".alert-success, [role='alert'], .toast, .toast-body")
+      .filter({ hasText: /deleted successfully/i })
+      .first();
+
+    await expect(successMsg).toBeVisible({ timeout: 10000 });
+  }
+
+  async expectSaleNotPresentBySoldAt(soldAt: string) {
+    // Sold At is 4th column in your screenshot/table
+    const soldAtCells = this.page.locator("table tbody tr td:nth-child(4)").filter({ hasText: soldAt });
+    await expect(soldAtCells).toHaveCount(0, { timeout: 10000 });
   }
 
   // ---------- TC_UI_009: Column Sorting ----------
 
   async clickPlantColumnHeader() {
-    const plantHeader = this.page.locator('th:has-text("Plant")').first();
-    await expect(plantHeader).toBeVisible();
-    
-    // Get initial data to compare after click
-    const initialData = await this.page.locator("table tbody tr td:first-child").allInnerTexts();
-    console.log("Data before click:", initialData);
-    
-    // Click the header
-    await plantHeader.click();
-    
-    // Wait for the table to update
-    await this.page.waitForLoadState("networkidle");
-    await this.page.waitForTimeout(800);
-    
-    // Verify data changed (sorting occurred)
-    const newData = await this.page.locator("table tbody tr td:first-child").allInnerTexts();
-    console.log("Data after click:", newData);
+    // Plant column is 1st column in your current checks
+    await this.clickSortableHeader("Plant", 1);
   }
 
   async expectSortedByPlantName() {
-    await this.page.waitForLoadState("networkidle");
-    await this.page.waitForTimeout(500);
+    const cleaned = await this.getSalesColumnTexts(1);
 
-    const plantNames = await this.page.locator("table tbody tr td:first-child").allInnerTexts();
-    const cleaned = plantNames.map(name => name.trim());
-    
-    console.log("Plant names retrieved:", cleaned);
-    
-    const sortedAsc = [...cleaned].sort();
-    const sortedDesc = [...cleaned].sort((a, b) => b.localeCompare(a));
-    
-    console.log("Sorted ASC:", sortedAsc);
-    console.log("Sorted DESC:", sortedDesc);
-    console.log("Matches ASC:", JSON.stringify(cleaned) === JSON.stringify(sortedAsc));
-    console.log("Matches DESC:", JSON.stringify(cleaned) === JSON.stringify(sortedDesc));
-    
-    const isSorted = 
+    const sortedAsc = [...cleaned].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    const sortedDesc = [...cleaned].sort((a, b) => b.localeCompare(a, undefined, { sensitivity: "base" }));
+
+    const isSorted =
       JSON.stringify(cleaned) === JSON.stringify(sortedAsc) ||
       JSON.stringify(cleaned) === JSON.stringify(sortedDesc);
-    
+
     expect(isSorted).toBe(true);
   }
 
   async clickQuantityColumnHeader() {
-    const quantityHeader = this.page.locator('table thead th:has-text("Quantity")').first();
-    await expect(quantityHeader).toBeVisible();
-    await quantityHeader.click();
+    // Quantity column is 2nd column
+    await this.clickSortableHeader("Quantity", 2);
   }
 
   async expectSortedByQuantity() {
-    await this.page.waitForLoadState("networkidle");
-    await this.page.waitForTimeout(500);
+    const quantityTexts = await this.getSalesColumnTexts(2);
+    const quantities = quantityTexts.map(q => Number.parseInt(q, 10));
 
-    const quantityTexts = await this.page.locator("table tbody tr td:nth-child(2)").allInnerTexts();
-    const quantities = quantityTexts.map(q => parseInt(q.trim(), 10));
-    
     const sortedAsc = [...quantities].sort((a, b) => a - b);
     const sortedDesc = [...quantities].sort((a, b) => b - a);
-    
-    const isSorted = 
+
+    const isSorted =
       JSON.stringify(quantities) === JSON.stringify(sortedAsc) ||
       JSON.stringify(quantities) === JSON.stringify(sortedDesc);
-    
+
     expect(isSorted).toBe(true);
   }
 
   async clickTotalPriceColumnHeader() {
-    const priceHeader = this.page.locator('table thead th:has-text("Total Price")').first();
-    await expect(priceHeader).toBeVisible();
-    await priceHeader.click();
+    // Total Price column is 3rd column (since Sold At is 4th in your delete method)
+    await this.clickSortableHeader("Total Price", 3);
   }
 
   async expectSortedByTotalPrice() {
-    await this.page.waitForLoadState("networkidle");
-    await this.page.waitForTimeout(500);
+    const priceTexts = await this.getSalesColumnTexts(3);
+    const prices = priceTexts.map(p => Number.parseFloat(p.replace(/[^0-9.]/g, "")));
 
-    const priceTexts = await this.page.locator("table tbody tr td:nth-child(4)").allInnerTexts();
-    const prices = priceTexts.map(p => parseFloat(p.replace(/[^0-9.]/g, '')));
-    
     const sortedAsc = [...prices].sort((a, b) => a - b);
     const sortedDesc = [...prices].sort((a, b) => b - a);
-    
-    const isSorted = 
+
+    const isSorted =
       JSON.stringify(prices) === JSON.stringify(sortedAsc) ||
       JSON.stringify(prices) === JSON.stringify(sortedDesc);
-    
+
     expect(isSorted).toBe(true);
   }
 
@@ -330,5 +335,32 @@ export class SalesPage {
   async expectNoDeleteActionsVisible() {
     const deleteButtons = this.page.locator('button:has-text("Delete"), a:has-text("Delete"), button[aria-label*="delete" i], .btn-danger');
     await expect(deleteButtons).toHaveCount(0);
+  }
+
+  // ---------- Small helpers for sorting tests ----------
+  private async getSalesColumnTexts(colIndex1Based: number): Promise<string[]> {
+    const cells = this.page.locator(`table tbody tr td:nth-child(${colIndex1Based})`);
+    const texts = await cells.allInnerTexts();
+    return texts.map(t => t.trim());
+  }
+
+  private async clickSortableHeader(headerText: string, colIndex1Based: number): Promise<void> {
+    const header = this.page.locator("table thead th").filter({ hasText: new RegExp(`^\\s*${headerText}\\s*$`, "i") }).first();
+    await expect(header).toBeVisible({ timeout: 10000 });
+
+    const before = (await this.getSalesColumnTexts(colIndex1Based)).join("|");
+
+    // Prefer clicking a link/button inside the header 
+    const interactive = header.locator("a, button").first();
+    if ((await interactive.count()) > 0) {
+      await interactive.click();
+    } else {
+      await header.click();
+    }
+
+    // Wait for actual table change 
+    await expect
+      .poll(async () => (await this.getSalesColumnTexts(colIndex1Based)).join("|"), { timeout: 10000 })
+      .not.toBe(before);
   }
 }
