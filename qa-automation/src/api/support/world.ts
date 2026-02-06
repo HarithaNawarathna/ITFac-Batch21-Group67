@@ -15,6 +15,13 @@ export class APIWorld extends World {
 
   /** Set when a category is created so After hook can delete it. */
   createdCategoryId: string | null = null;
+  saleIdToFetch: string | null = null;
+
+  plantId: number | null = null;
+  initialPlantStock: number | null = null;
+  quantitySold: number | null = null;
+  createdSaleId: string | null = null;
+  createdSaleIds: string[] = [];
 
   constructor(options: IWorldOptions) {
     super(options);

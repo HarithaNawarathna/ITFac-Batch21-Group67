@@ -13,4 +13,7 @@ export const LoginSelectors = {
 export const LogoutSelectors = {
   // left nav / header logout button (covers button or link text)
   logoutButton: 'button:has-text("Logout"), a:has-text("Logout")',
+export const SalesSelectors = {
+  table: "table",
+  pagination: ".pagination"
 };

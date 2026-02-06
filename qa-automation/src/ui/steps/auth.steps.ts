@@ -1,8 +1,9 @@
 import { Given, When, Then } from "@cucumber/cucumber";
+import { expect } from "@playwright/test";
 import { UIWorld } from "../support/world.js";
-import { BasePage } from "../pages/base.page.js";
 import { LoginPage } from "../pages/auth/login.page.js";
 import { LogoutPage } from "../pages/auth/logout.page.js";
+import { BasePage } from "../pages/base.page.js";
 import { ENV } from "../../config/env.js";
 
 Given("I am on the login page", async function (this: UIWorld) {
@@ -34,7 +35,7 @@ Given("I am logged in as user", async function (this: UIWorld) {
 When(
   "I login as {string}",
   async function (this: UIWorld, role: "admin" | "user") {
-    const login: LoginPage = this.state.loginPage;
+    const login = this.state.loginPage!;
     const creds = ENV.USERS[role];
     await login.login(creds.username, creds.password);
   }
@@ -43,7 +44,7 @@ When(
 When(
   "I submit login with empty username",
   async function (this: UIWorld) {
-    const login: LoginPage = this.state.loginPage;
+    const login = this.state.loginPage!;
     await login.login("", "dummy");
   }
 );
@@ -51,7 +52,7 @@ When(
 When(
   "I submit login with empty password",
   async function (this: UIWorld) {
-    const login: LoginPage = this.state.loginPage;
+    const login = this.state.loginPage!;
     await login.login("dummy", "");
   }
 );
@@ -67,7 +68,7 @@ When(
 Then(
   "I should see username validation message {string}",
   async function (this: UIWorld, message: string) {
-    const login: LoginPage = this.state.loginPage;
+    const login = this.state.loginPage!;
     await login.expectUsernameError(message);
   }
 );
@@ -75,7 +76,7 @@ Then(
 Then(
   "I should see password validation message {string}",
   async function (this: UIWorld, message: string) {
-    const login: LoginPage = this.state.loginPage;
+    const login = this.state.loginPage!;
     await login.expectPasswordError(message);
   }
 );
@@ -83,8 +84,7 @@ Then(
 Then(
   "I should be redirected away from login page",
   async function (this: UIWorld) {
-    const login: LoginPage = this.state.loginPage;
-    await login.expectRedirectedFromLogin();
+    await expect(this.page).not.toHaveURL(/\/login/);
   }
 );
 
