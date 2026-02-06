@@ -12,6 +12,10 @@ export interface UIWorldState {
   initialStock: any;
   loginPage?: LoginPage;
   salesPage?: SalesPage;
+  createdPlantName?: string;
+  updatedPlantName?: string;
+  selectedPlantName?: string;
+  deletedPlantName?: string;
 }
 
 export class UIWorld extends World {

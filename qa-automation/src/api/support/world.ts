@@ -22,6 +22,8 @@ export class APIWorld extends World {
   quantitySold: number | null = null;
   createdSaleId: string | null = null;
   createdSaleIds: string[] = [];
+  createdPlantId: string | null = null;
+  deletedPlantId?: number;
 
   constructor(options: IWorldOptions) {
     super(options);
