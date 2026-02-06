@@ -8,6 +8,7 @@ dotenv.config();
 
 setDefaultTimeout(10_000);
 
+// After each scenario: delete category if one was created (DELETE /api/categories/{id})
 After(async function (this: APIWorld) {
   if (this.createdCategoryId && this.authToken) {
     try {
