@@ -9,6 +9,7 @@
     "test:ui:headed": "HEADED=1 node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.js",
     "test:ui:login": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/ui/features/auth/login.feature --config cucumber.js",
     "test:ui:login:headed": "HEADED=1 node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/ui/features/auth/login.feature --config cucumber.js",
+    "test:ui:plants": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.js --tags @plants",
     "test:api": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.api.js",
     "test:api:login": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/api/features/auth/login.feature --config cucumber.api.js",
     "test:all": "npm run test:ui && npm run test:api",
