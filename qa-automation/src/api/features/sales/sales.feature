@@ -41,17 +41,15 @@ Feature: Sales API
     And the sales list is returned
 
   Scenario: TC_API_007 - Get sale by valid ID
-    Given Admin authenticated
-    And a sale exists for plant with id "4" and quantity 1
-    And User authenticated
+    Given User authenticated
+    And a valid sale id exists
     When User requests the sale by id
     Then the sales response status is 200
     And the sale details are returned
 
   Scenario: TC_API_008 - Get sales with pagination
-    Given Admin authenticated
-    And at least 6 sales exist for plant with id "4" and quantity 1
-    And User authenticated
+    Given User authenticated
+    And at least 6 sales exist
     When User requests sales page 0 with size 5
     Then the sales response status is 200
     And a paginated sales response is returned with max size 5

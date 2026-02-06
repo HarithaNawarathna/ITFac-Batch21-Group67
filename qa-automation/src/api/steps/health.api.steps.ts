@@ -39,7 +39,11 @@ When("I request the application health endpoint", async function (this: APIWorld
   const url = buildApiUrl(ROUTES.HEALTH);
 
   try {
-    this.lastResponse = await axios.get(url, { headers: { accept: "*/*" } });
+    this.lastResponse = await axios.get(url, {
+      headers: this.authToken
+        ? { Authorization: `Bearer ${this.authToken}`, accept: "*/*" }
+        : { accept: "*/*" },
+    });
   } catch (err) {
     if (axios.isAxiosError(err) && err.response) this.lastResponse = err.response;
     else throw err;

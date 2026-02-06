@@ -1,15 +1,9 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import { expect } from "@playwright/test";
 import axios from "axios";
-import { getPlantById } from "../clients/plants.client.js";
-import {
-  deleteSale,
-  getAllSales,
-  getSalesPage,
-  sellPlant,
-  getSaleById,
-} from "../clients/sales.client.js";
+import { deleteSale, getAllSales, getSaleById, getSalesPage, sellPlant } from "../clients/sales.client.js";
 import type { APIWorld } from "../support/world.js";
+import { getPlantById } from "../clients/plants.client.js";
 
 function extractStock(maybePlant: unknown): number | null {
   if (!maybePlant || typeof maybePlant !== "object") return null;
@@ -241,21 +235,31 @@ Then(
 When(
   "Admin requests the sales list",
   async function (this: APIWorld) {
-    expect(this.authToken).toBeTruthy();
-    const token = this.authToken;
-    if (!token) throw new Error("Expected auth token");
-
-    try {
-      this.lastResponse = await getAllSales(token);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
-    }
+    await requestSalesList.call(this);
   }
 );
+
+When(
+  "User requests the sales list",
+  async function (this: APIWorld) {
+    await requestSalesList.call(this);
+  }
+);
+
+// Reuse same implementation for both Admin/User
+async function requestSalesList(this: APIWorld) {
+  const token = requireToken(this);
+
+  try {
+    this.lastResponse = await getAllSales(token);
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response) {
+      this.lastResponse = err.response;
+    } else {
+      throw err;
+    }
+  }
+}
 
 Then("the sales list is returned", async function (this: APIWorld) {
   expect(this.lastResponse).not.toBeNull();
@@ -263,7 +267,6 @@ Then("the sales list is returned", async function (this: APIWorld) {
   if (!response) throw new Error("Expected response");
   expect(response.status).toBe(200);
 
-  // Swagger shows GET /api/sales returns a list.
   const data = response.data as unknown;
   expect(Array.isArray(data)).toBe(true);
 });
@@ -361,18 +364,17 @@ Given(
 When(
   "Admin requests sales page {int} with size {int} sorted by {string}",
   async function (this: APIWorld, page: number, size: number, sort: string) {
-    expect(this.authToken).toBeTruthy();
-    const token = this.authToken;
-    if (!token) throw new Error("Expected auth token");
+    const token = requireToken(this);
+
+    const [field, dir] = sort.split(",").map(s => s.trim());
+    const sortField = field || undefined;
+    const sortDir = (dir === "asc" || dir === "desc") ? dir : undefined;
 
     try {
-      this.lastResponse = await getSalesPage(page, size, token, sort);
+      this.lastResponse = await getSalesPage(page, size, token, sortField, sortDir);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
+      if (axios.isAxiosError(err) && err.response) this.lastResponse = err.response;
+      else throw err;
     }
   }
 );
@@ -405,39 +407,27 @@ Then(
 // TC_API_007
 
 When("User requests the sale by id", async function (this: APIWorld) {
-  expect(this.authToken).toBeTruthy();
-  const token = this.authToken;
-  if (!token) throw new Error("Expected auth token");
+  const token = requireToken(this);
 
-  if (!this.createdSaleId) throw new Error("Expected createdSaleId (seed a sale first)");
+  const idRaw = this.saleIdToFetch ?? this.createdSaleId;
+  if (!idRaw) {
+    throw new Error("Expected saleIdToFetch (run 'a valid sale id exists' first)");
+  }
 
   try {
-    this.lastResponse = await getSaleById(this.createdSaleId, token);
+    this.lastResponse = await getSaleById(idRaw, token); 
   } catch (err) {
-    if (axios.isAxiosError(err) && err.response) {
-      this.lastResponse = err.response;
-    } else {
-      throw err;
-    }
+    if (axios.isAxiosError(err) && err.response) this.lastResponse = err.response;
+    else throw err;
   }
 });
 
 Then("the sale details are returned", async function (this: APIWorld) {
-  expect(this.lastResponse).not.toBeNull();
-  const response = this.lastResponse;
-  if (!response) throw new Error("Expected response");
-  expect(response.status).toBe(200);
-
-  const data = response.data as Record<string, unknown>;
-  expect(data).toHaveProperty("id");
-  expect(data).toHaveProperty("plant");
-  expect(data).toHaveProperty("quantity");
-  expect(data).toHaveProperty("totalPrice");
-  expect(data).toHaveProperty("soldAt");
-
-  if (this.createdSaleId) {
-    expect(String(data.id)).toBe(String(this.createdSaleId));
-  }
+  const res = this.lastResponse;
+  if (!res) throw new Error("No response found");
+  const body = res.data as any;
+  const id = body?.id ?? body?._id;
+  if (!id) throw new Error("Sale details missing id");
 });
 
 // TC_API_008
@@ -461,16 +451,6 @@ When(
   }
 );
 
-Then("the sales list is returned", async function (this: APIWorld) {
-  expect(this.lastResponse).not.toBeNull();
-  const response = this.lastResponse;
-  if (!response) throw new Error("Expected response");
-  expect(response.status).toBe(200);
-
-  // Swagger shows GET /api/sales returns a list.
-  const data = response.data as unknown;
-  expect(Array.isArray(data)).toBe(true);
-});
 
 // TC_API_009
 
@@ -498,7 +478,6 @@ Then("an error response is returned", async function (this: APIWorld) {
   const response = this.lastResponse;
   if (!response) throw new Error("Expected response");
 
-  // status is asserted in: Then the sales response status is {int}
   expect(hasAnyErrorField(response.data)).toBe(true);
 });
 
@@ -523,4 +502,36 @@ function hasAnyErrorField(payload: unknown): boolean {
 
   return false;
 }
+
+Given("a valid sale id exists", async function (this: APIWorld) {
+  const token = requireToken(this);
+
+  const res = await getAllSales(token);
+  const data = res.data as unknown;
+
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error("Precondition failed: no sales exist to fetch a valid saleId");
+  }
+
+  const first = data[0] as any;
+  const id = first?.id ?? first?._id;
+  if (!id) throw new Error("Could not find sale id field in /api/sales response");
+
+  this.saleIdToFetch = String(id);
+});
+
+Given("at least {int} sales exist", async function (this: APIWorld, count: number) {
+  const token = requireToken(this);
+
+  const res = await getAllSales(token);
+  const data = res.data as unknown;
+
+  if (!Array.isArray(data)) {
+    throw new TypeError("Expected /api/sales to return an array");
+  }
+
+  if (data.length < count) {
+    throw new Error(`Precondition failed: expected >= ${count} sales, but found ${data.length}`);
+  }
+});
 

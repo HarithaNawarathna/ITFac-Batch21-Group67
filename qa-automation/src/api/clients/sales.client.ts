@@ -55,13 +55,15 @@ export async function getSalesPage(
 	page: number,
 	size: number,
 	token: string,
-	sort?: string
+	sortField?: string,
+	sortDir?: "asc" | "desc"
 ): Promise<AxiosResponse> {
 	return axios.get(`${baseURL}${ROUTES.SALES_PAGE}`, {
 		params: {
 			page,
 			size,
-			sort,
+			sortField,
+			sortDir,
 		},
 		headers: {
 			Authorization: `Bearer ${token}`,
