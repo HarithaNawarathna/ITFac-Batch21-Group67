@@ -9,3 +9,8 @@ export const LoginSelectors = {
   // Bootstrap alerts / toasts (fallbacks)
   alert: '.alert, .toast, [role="alert"]'
 };
+
+export const SalesSelectors = {
+  table: "table",
+  pagination: ".pagination"
+};
