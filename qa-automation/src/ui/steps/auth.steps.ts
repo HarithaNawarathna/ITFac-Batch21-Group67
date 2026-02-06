@@ -45,6 +45,14 @@ When(
   }
 );
 
+When(
+  "I login with invalid username or invalid password",
+  async function (this: UIWorld) {
+    const login: LoginPage = this.state.loginPage;
+    await login.login("invaliduser", "invalidpassword");
+  }
+);
+
 Then(
   "I should see username validation message {string}",
   async function (this: UIWorld, message: string) {
@@ -73,3 +81,43 @@ Then("I should be on the dashboard", async function (this: UIWorld) {
   const dashboard = new BasePage(this.page);
   await dashboard.expectOnDashboard();
 });
+
+Then(
+  "I should see a global error message {string}",
+  async function (this: UIWorld, message: string) {
+    const login: LoginPage = this.state.loginPage;
+    await login.expectGlobalErrorMessage(message);
+  }
+);
+
+Then(
+  "the login button should be visible",
+  async function (this: UIWorld) {
+    const login: LoginPage = this.state.loginPage;
+    await login.expectLoginButtonVisible();
+  }
+);
+
+Then(
+  "the login button should be enabled",
+  async function (this: UIWorld) {
+    const login: LoginPage = this.state.loginPage;
+    await login.expectLoginButtonEnabled();
+  }
+);
+
+Then(
+  "the login button should have text {string}",
+  async function (this: UIWorld, text: string) {
+    const login: LoginPage = this.state.loginPage;
+    await login.expectLoginButtonText(text);
+  }
+);
+
+Then(
+  "I should see an error alert with message {string}",
+  async function (this: UIWorld, message: string) {
+    const login: LoginPage = this.state.loginPage;
+    await login.expectErrorAlert(message);
+  }
+);
