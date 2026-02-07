@@ -93,12 +93,23 @@ qa-automation/
 | `USER_PASSWORD` | Yes | User login password |
 | `HEADED` | No | Set to `1` or `true` to run UI tests in a visible browser |
 
-## Reports
+## Allure reports
 
-- **Allure (UI):** `npm run report:ui` (uses `./scripts/generate-ui-allure.sh`)
-- **Allure (API):** `npm run report:api` (uses `./scripts/generate-api-allure.sh`)
+Test runs write Allure results to `reports/allure/ui-results` (UI) and `reports/allure/api-results` (API). Generate and view the report after running tests.
 
-Reports are written under `reports/allure/`.
+| Command | Description |
+|--------|-------------|
+| `npm run report:ui` | Generate Allure report from UI results and open in browser |
+| `npm run report:api` | Generate Allure report from API results and open in browser |
+| `npm run report:ui:generate` | Generate UI report only (output in `reports/allure/ui-report/`) |
+| `npm run report:api:generate` | Generate API report only (output in `reports/allure/api-report/`) |
+
+**Typical workflow**
+
+1. Run tests: `npm run test:ui` or `npm run test:api`
+2. Open report: `npm run report:ui` or `npm run report:api`
+
+Generated reports and result files under `reports/allure/` are ignored by Git (see `.gitignore`).
 
 ## Using pretest-created data (category, plant, sale)
 
