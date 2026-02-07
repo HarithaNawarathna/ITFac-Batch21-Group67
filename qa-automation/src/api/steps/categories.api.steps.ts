@@ -1,6 +1,5 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import { expect } from "@playwright/test";
-import axios from "axios";
 import {
   createCategory,
   createRootCategoryForTest,
@@ -18,25 +17,20 @@ Given("a category exists", async function (this: APIWorld) {
   const unique = Date.now();
   const parentName = `Category-Root-${unique}-${Math.random().toString(36).substring(2, 10)}`;
   const subName = `Category-Sub-${unique}`;
-  try {
-    const rootRes = await createRootCategoryForTest(parentName, token);
-    const rootData = rootRes.data as Record<string, unknown>;
-    const parentIdRaw = rootData?.id;
-    if (parentIdRaw == null) throw new Error("Root category response missing id");
-    const parentId = Number(parentIdRaw);
-    if (!Number.isFinite(parentId)) throw new Error("Root category id is not a number");
-    const subRes = await createSubcategoryForTest(subName, parentId, token);
-    const subData = subRes.data as Record<string, unknown>;
-    const subId = subData?.id;
-    if (subId == null) throw new Error("Subcategory response missing id");
-    this.createdCategoryId = String(subId);
-    this.createdParentCategoryId = String(parentId);
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response) {
-      this.lastResponse = err.response;
-    }
-    throw err;
-  }
+  const rootRes = await createRootCategoryForTest(parentName, token);
+  expect(rootRes.status).toBe(201);
+  const rootData = rootRes.data as Record<string, unknown>;
+  const parentIdRaw = rootData?.id;
+  if (parentIdRaw == null) throw new Error("Root category response missing id");
+  const parentId = Number(parentIdRaw);
+  if (!Number.isFinite(parentId)) throw new Error("Root category id is not a number");
+  const subRes = await createSubcategoryForTest(subName, parentId, token);
+  expect(subRes.status).toBe(201);
+  const subData = subRes.data as Record<string, unknown>;
+  const subId = subData?.id;
+  if (subId == null) throw new Error("Subcategory response missing id");
+  this.createdCategoryId = String(subId);
+  this.createdParentCategoryId = String(parentId);
 });
 
 Given("a category exists for delete", async function (this: APIWorld) {
@@ -44,19 +38,13 @@ Given("a category exists for delete", async function (this: APIWorld) {
   const token = this.authToken!;
   const suffix = Math.random().toString(36).substring(2, 7);
   const name = `Del${suffix}`;
-  try {
-    const res = await createRootCategoryForTest(name, token);
-    const data = res.data as Record<string, unknown>;
-    const id = data?.id;
-    if (id == null) throw new Error("Category response missing id");
-    this.createdCategoryId = String(id);
-    this.createdParentCategoryId = null;
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response) {
-      this.lastResponse = err.response;
-    }
-    throw err;
-  }
+  const res = await createRootCategoryForTest(name, token);
+  expect(res.status).toBe(201);
+  const data = res.data as Record<string, unknown>;
+  const id = data?.id;
+  if (id == null) throw new Error("Category response missing id");
+  this.createdCategoryId = String(id);
+  this.createdParentCategoryId = null;
 });
 
 When(
@@ -65,21 +53,13 @@ When(
     expect(this.authToken).toBeTruthy();
     const token = this.authToken;
     if (!token) throw new Error("Expected auth token");
-    try {
-      this.lastResponse = await createCategory(name, token);
-      const response = this.lastResponse;
-      if (response && response.status >= 201 && response.status < 300) {
-        const data = response.data as Record<string, unknown>;
-        const id = data?.id;
-        this.createdCategoryId =
-          id !== undefined && id !== null ? String(id) : null;
-      }
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
+    const response = await createCategory(name, token);
+    this.lastResponse = response;
+    if (response.status >= 201 && response.status < 300) {
+      const data = response.data as Record<string, unknown>;
+      const id = data?.id;
+      this.createdCategoryId =
+        id !== undefined && id !== null ? String(id) : null;
     }
   }
 );
@@ -92,15 +72,7 @@ When(
     const token = this.authToken!;
     const id = this.createdCategoryId!;
     const parentId = this.createdParentCategoryId!;
-    try {
-      this.lastResponse = await updateCategory(id, name, parentId,token);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
-    }
+    this.lastResponse = await updateCategory(id, name, parentId, token);
   }
 );
 
@@ -109,30 +81,14 @@ When("I delete the category", async function (this: APIWorld) {
   expect(this.createdCategoryId).toBeTruthy();
   const token = this.authToken!;
   const id = this.createdCategoryId!;
-  try {
-    this.lastResponse = await deleteCategory(id, token);
-    this.createdCategoryId = null;
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response) {
-      this.lastResponse = err.response;
-    } else {
-      throw err;
-    }
-  }
+  this.lastResponse = await deleteCategory(id, token);
+  this.createdCategoryId = null;
 });
 
 When("I get the category list", async function (this: APIWorld) {
   expect(this.authToken).toBeTruthy();
   const token = this.authToken!;
-  try {
-    this.lastResponse = await getCategories(token);
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response) {
-      this.lastResponse = err.response;
-    } else {
-      throw err;
-    }
-  }
+  this.lastResponse = await getCategories(token);
 });
 
 When(
@@ -140,15 +96,7 @@ When(
   async function (this: APIWorld, page: number, size: number) {
     expect(this.authToken).toBeTruthy();
     const token = this.authToken!;
-    try {
-      this.lastResponse = await getCategories(token, { page, size });
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
-    }
+    this.lastResponse = await getCategories(token, { page, size });
   }
 );
 
@@ -157,15 +105,7 @@ When(
   async function (this: APIWorld, search: string) {
     expect(this.authToken).toBeTruthy();
     const token = this.authToken!;
-    try {
-      this.lastResponse = await getCategories(token, { search });
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
-    }
+    this.lastResponse = await getCategories(token, { search });
   }
 );
 
@@ -188,15 +128,7 @@ When(
     expect(this.authToken).toBeTruthy();
     const token = this.authToken!;
     const parentId = getParentCategoryIdFromParam(this, parentIdParam);
-    try {
-      this.lastResponse = await getCategories(token, { parentId });
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
-    }
+    this.lastResponse = await getCategories(token, { parentId });
   }
 );
 
@@ -205,15 +137,7 @@ When(
   async function (this: APIWorld, sort: string) {
     expect(this.authToken).toBeTruthy();
     const token = this.authToken!;
-    try {
-      this.lastResponse = await getCategories(token, { sort });
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        this.lastResponse = err.response;
-      } else {
-        throw err;
-      }
-    }
+    this.lastResponse = await getCategories(token, { sort });
   }
 );
 

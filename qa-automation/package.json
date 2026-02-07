@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "allure-cucumberjs": "^3.4.5",
     "allure-playwright": "^3.0.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.0",

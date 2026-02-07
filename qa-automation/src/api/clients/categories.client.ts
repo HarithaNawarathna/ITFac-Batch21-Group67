@@ -25,6 +25,7 @@ export async function createCategory(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      validateStatus: () => true,
     }
   );
 }
@@ -50,6 +51,7 @@ export async function createRootCategoryForTest(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      validateStatus: () => true,
     }
   );
 }
@@ -71,6 +73,7 @@ export async function createSubcategoryForTest(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      validateStatus: () => true,
     }
   );
 }
@@ -92,6 +95,7 @@ export async function getCategories(
     : `${baseURL}${ROUTES.CATEGORIES}`;
   return axios.get(url, {
     headers: { Authorization: `Bearer ${token}` },
+    validateStatus: () => true,
   });
 }
 
@@ -109,6 +113,7 @@ export async function updateCategory(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      validateStatus: () => true,
     }
   );
 }
@@ -119,5 +124,6 @@ export async function deleteCategory(
 ): Promise<AxiosResponse> {
   return axios.delete(`${baseURL}${ROUTES.CATEGORIES}/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
+    validateStatus: () => true,
   });
 }

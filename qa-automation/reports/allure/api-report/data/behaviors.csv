@@ -1,0 +1,8 @@
+"BROKEN","EPIC","FAILED","FEATURE","PASSED","SKIPPED","STORY","UNKNOWN"
+"0","","0","Login API","4","0","","0"
+"0","","0","Dashboard API Tests","10","0","","0"
+"3","","0","Categories API","7","0","","0"
+"5","","0","Plants API","5","0","","0"
+"7","","0","Sales API","3","0","","0"
+"0","","0","Category pretest – trigger Before hook (create category, plant, sale)","1","0","","0"
+"0","","0","Health API","1","0","","0"

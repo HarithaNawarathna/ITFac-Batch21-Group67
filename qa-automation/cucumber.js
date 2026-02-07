@@ -1,5 +1,21 @@
 /** @type {import('@cucumber/cucumber').IConfiguration} */
+
 export default {
-  paths: ["src/ui/features/**/*.feature"],
-  import: ["src/ui/support/**/*.ts", "src/ui/steps/**/*.ts"],
+  require: [
+    'src/ui/steps/**/*.ts'
+  ],
+  paths: [
+    'src/ui/features/**/*.feature'
+  ],
+
+
+  format: [
+    'progress',
+    'allure-cucumberjs/reporter'
+  ],
+  formatOptions: {
+    resultsDir: 'reports/allure/ui-results'
+  },
+
+  publishQuiet: true
 };
