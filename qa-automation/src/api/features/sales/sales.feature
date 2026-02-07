@@ -62,3 +62,11 @@ Feature: Sales API
     When User requests the sale with invalid id 99999999
     Then the sales response status is 404
     And an error response is returned
+
+  Scenario: TC_API_011 - User can sell a plant via API
+    Given User authenticated
+    And plant with id "pretest" is in stock
+    When User sells plant with id "pretest" and quantity 2
+    Then the sales response status is 201
+    And the sale is created successfully
+    And the plant stock is reduced

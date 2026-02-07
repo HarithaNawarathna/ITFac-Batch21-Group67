@@ -122,19 +122,42 @@ Given(
 When(
   "Admin sells plant with id {string} and quantity {int}",
   async function (this: APIWorld, plantId: string, qty: number) {
-		expect(this.authToken).toBeTruthy();
-		const token = this.authToken;
-		if (!token) throw new Error("Expected auth token");
+    expect(this.authToken).toBeTruthy();
+    const token = this.authToken;
+    if (!token) throw new Error("Expected auth token");
 
-		this.plantId = getPlantIdFromParam(this, plantId);
-		this.quantitySold = qty;
+    // Resolve "pretest" -> actual numeric id
+    this.plantId = getPlantIdFromParam(this, plantId);
+    this.quantitySold = qty;
 
     try {
-      this.lastResponse = await sellPlant(
-        Number(plantId),
-        qty,
-			token
-      );
+      // FIX: use resolved id, not Number(plantId)
+      this.lastResponse = await sellPlant(this.plantId, qty, token);
+      recordSaleIdIfPresent(this, this.lastResponse.data);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        this.lastResponse = err.response;
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+// NEW: TC_API_011
+When(
+  "User sells plant with id {string} and quantity {int}",
+  async function (this: APIWorld, plantId: string, qty: number) {
+    expect(this.authToken).toBeTruthy();
+    const token = this.authToken;
+    if (!token) throw new Error("Expected auth token");
+
+    this.plantId = getPlantIdFromParam(this, plantId);
+    this.quantitySold = qty;
+
+    try {
+      this.lastResponse = await sellPlant(this.plantId, qty, token);
+      recordSaleIdIfPresent(this, this.lastResponse.data);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         this.lastResponse = err.response;
