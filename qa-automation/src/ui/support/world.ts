@@ -5,6 +5,7 @@ import type { SalesPage } from "../pages/sales/sales.page.js";
 import { ENV } from "../../config/env.js";
 import { LoginPage as LoginPageClass } from "../pages/auth/login.page.js";
 import { BasePage } from "../pages/base.page.js";
+import type { PretestIds } from "../../shared/utils/pretest-ids.js";
 
 export interface UIWorldState {
   selectedPlantId(selectedPlantId: any): unknown;
@@ -16,6 +17,8 @@ export interface UIWorldState {
   updatedPlantName?: string;
   selectedPlantName?: string;
   deletedPlantName?: string;
+  /** IDs created by API @pretest (from world or pretest-ids.json). */
+  pretestIds?: PretestIds | null;
 }
 
 export class UIWorld extends World {
@@ -27,7 +30,8 @@ export class UIWorld extends World {
       throw new Error("Function not implemented.");
     },
     quantitySold: undefined,
-    initialStock: undefined
+    initialStock: undefined,
+    pretestIds: undefined,
   };
 
   constructor(options: IWorldOptions) {

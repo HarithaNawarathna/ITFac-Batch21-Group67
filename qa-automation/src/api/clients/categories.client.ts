@@ -12,6 +12,7 @@ export interface GetCategoriesParams {
   sort?: string;
 }
 
+/** Used by "I create a category with name" – sends { name } only (success/failure/validation scenarios). */
 export async function createCategory(
   name: string,
   token: string
@@ -19,6 +20,53 @@ export async function createCategory(
   return axios.post(
     `${baseURL}${ROUTES.CATEGORIES}`,
     { name },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+}
+
+/** Full payload the API expects for a root category. Used by "a category exists" (setup for update/delete). */
+const ROOT_PARENT = { id: null, name: null, parent: null } as const;
+
+/** Creates a root category with full payload { id, name, parent }. Use for test setup (e.g. "a category exists"); use createCategory for create success/failure scenarios. */
+export async function createRootCategoryForTest(
+  name: string,
+  token: string
+): Promise<AxiosResponse> {
+  const body = {
+    id: null,
+    name,
+    parent: ROOT_PARENT,
+  };
+  return axios.post(
+    `${baseURL}${ROUTES.CATEGORIES}`,
+    body,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+}
+
+/** Creates a subcategory under a parent (like pretest). Payload: { name, parent: { id: parentId } }. Use for test setup. */
+export async function createSubcategoryForTest(
+  name: string,
+  parentId: number,
+  token: string
+): Promise<AxiosResponse> {
+  const body = {
+    name,
+    parent: { id: parentId },
+  };
+  return axios.post(
+    `${baseURL}${ROUTES.CATEGORIES}`,
+    body,
     {
       headers: {
         Authorization: `Bearer ${token}`,

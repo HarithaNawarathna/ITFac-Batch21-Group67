@@ -8,10 +8,23 @@ import { sellPlant } from "../../api/clients/sales.client.js";
 import { ENV } from "../../config/env.js";
 import { ROUTES } from "../../config/routes.js";
 import type { APIWorld } from "../../api/support/world.js";
+import { readPretestIds, writePretestIds } from "./pretest-ids.js";
 
 const testdataDir = path.resolve("src/shared/testdata");
 
-Before({ tags: "@categoryCrud" }, async function (this: APIWorld) {
+/** Run pretest only once (like BeforeAll). Use file as source of truth so it works even if the module is re-loaded. */
+Before({ tags: "@pretest" }, async function (this: APIWorld) {
+  const ids = readPretestIds();
+  if (ids) {
+    this.createdParentCategoryId = ids.parentCategoryId;
+    this.createdCategoryId = ids.categoryId;
+    this.createdPlantId = ids.plantId;
+    this.createdSaleId = ids.saleId;
+    this.createdSaleIds = [ids.saleId];
+    await authenticateAdmin(this);
+    return;
+  }
+
   await authenticateAdmin(this);
   const token = this.authToken!;
 
@@ -116,5 +129,11 @@ Before({ tags: "@categoryCrud" }, async function (this: APIWorld) {
   }
   this.createdSaleId = String(saleId);
   this.createdSaleIds.push(this.createdSaleId);
+  writePretestIds({
+    parentCategoryId: this.createdParentCategoryId!,
+    categoryId: this.createdCategoryId!,
+    plantId: this.createdPlantId!,
+    saleId: this.createdSaleId,
+  });
   console.log(`[pretest] Created category ${subcategoryId} under parent ${parentCategoryId}, plant ${this.createdPlantId}, sale ${this.createdSaleId}`);
 });
