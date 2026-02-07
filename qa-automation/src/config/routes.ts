@@ -1,5 +1,4 @@
 export const ROUTES = {
-  // API Routes
   AUTH_LOGIN: "/api/auth/login",
 
   CATEGORIES: "/api/categories",
