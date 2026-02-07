@@ -1,6 +1,9 @@
 {
+    "id": null,
     "name": "Fruits",
     "parent": {
-        "id": null
+        "id": null,
+        "name": null,
+        "parent": null
     }
 }

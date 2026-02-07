@@ -13,6 +13,7 @@
     "test:api:plants": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.api.js --tags \"@api and @plants\"",
     "test:api": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config cucumber.api.js",
     "test:api:login": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/api/features/auth/login.feature --config cucumber.api.js",
+    "test:api:pretest": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/api/features/cat-pretest.feature --config cucumber.api.js --tags \"@api and @categoryCrud\"",
     "test:all": "npm run test:ui && npm run test:api",
     "report:ui": "./scripts/generate-ui-allure.sh",
     "report:api": "./scripts/generate-api-allure.sh"
