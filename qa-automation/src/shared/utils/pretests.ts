@@ -16,13 +16,24 @@ const testdataDir = path.resolve("src/shared/testdata");
 Before({ tags: "@pretest" }, async function (this: APIWorld) {
   const ids = readPretestIds();
   if (ids) {
-    this.createdParentCategoryId = ids.parentCategoryId;
-    this.createdCategoryId = ids.categoryId;
-    this.createdPlantId = ids.plantId;
-    this.createdSaleId = ids.saleId;
-    this.createdSaleIds = [ids.saleId];
     await authenticateAdmin(this);
-    return;
+    // If DB was wiped, stored IDs are invalid. Verify one resource still exists before reusing.
+    try {
+      const check = await axios.get(
+        `${ENV.API_BASE_URL}${ROUTES.CATEGORIES}/${ids.categoryId}`,
+        { headers: { Authorization: `Bearer ${this.authToken}` } }
+      );
+      if (check.status === 200) {
+        this.createdParentCategoryId = ids.parentCategoryId;
+        this.createdCategoryId = ids.categoryId;
+        this.createdPlantId = ids.plantId;
+        this.createdSaleId = ids.saleId;
+        this.createdSaleIds = [ids.saleId];
+        return;
+      }
+    } catch {
+      // 404 or other: IDs no longer valid (e.g. DB was wiped), fall through and create fresh
+    }
   }
 
   await authenticateAdmin(this);
