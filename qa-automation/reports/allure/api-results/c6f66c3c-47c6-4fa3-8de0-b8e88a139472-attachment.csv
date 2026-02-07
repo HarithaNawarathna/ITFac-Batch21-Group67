@@ -1,0 +1,3 @@
+username,password,expectedRole
+admin,admin123,admin
+testuser,test123,user
