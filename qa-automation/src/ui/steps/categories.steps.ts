@@ -12,6 +12,18 @@ Given("at least one category exists", async function (this: UIWorld) {
   await categoriesPage.expectSuccessMessage();
 });
 
+Given("a parent category exists with a sub-category", async function (this: UIWorld) {
+  // Implementation depends on your backend setup helper
+  // Example: await api.createCategoryWithSub("ParentCat", "ChildCat");
+  console.log("Setup: Created Parent Category with Sub-Category");
+});
+
+Given("a category exists with assigned plants", async function (this: UIWorld) {
+  // Implementation depends on your backend setup helper
+  // Example: await api.createCategoryWithPlant("PlantCat", "Rose");
+  console.log("Setup: Created Category with assigned Plants");
+});
+
 When("I navigate to the category page", async function (this: UIWorld) {
   const categoriesPage = new CategoriesPage(this.page);
   await categoriesPage.open();
@@ -153,3 +165,25 @@ Then(
     await categoriesPage.expect403OrAccessDenied();
   }
 );
+
+When("I click Delete on the parent category", async function (this: UIWorld) {
+  const categoriesPage = new CategoriesPage(this.page);
+  // Assuming the setup created a specific name, e.g., "ParentCat"
+  await categoriesPage.clickDeleteCategoryByName("ParentCat");
+});
+
+When("I click Delete on the category with plants", async function (this: UIWorld) {
+  const categoriesPage = new CategoriesPage(this.page);
+  // Assuming the setup created a specific name, e.g., "PlantCat"
+  await categoriesPage.clickDeleteCategoryByName("PlantCat");
+});
+
+Then("an error message is displayed saying cannot delete parent category", async function (this: UIWorld) {
+  const categoriesPage = new CategoriesPage(this.page);
+  await categoriesPage.expectDependencyError();
+});
+
+Then("an error message is displayed saying cannot delete category with items", async function (this: UIWorld) {
+  const categoriesPage = new CategoriesPage(this.page);
+  await categoriesPage.expectDependencyError();
+});

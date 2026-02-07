@@ -93,6 +93,9 @@ docker-compose.override.yml
 .env.local
 .env.*.local
 
+# Runtime pretest IDs (written by @pretest Before hook)
+src/shared/testdata/pretest-ids.json
+
 # Logs
 logs/
 *.log

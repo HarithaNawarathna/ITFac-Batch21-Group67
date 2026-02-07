@@ -23,14 +23,6 @@ async function unauthenticatedGet(url: string) {
   });
 }
 
-Given("User authenticated", async function (this: APIWorld) {
-  const creds = ENV.USERS.user;
-  const response = await login(creds.username, creds.password);
-  expect(response.status).toBe(200);
-  const data = response.data as { token: string };
-  this.authToken = data.token;
-});
-
 Given("I am not authenticated", async function (this: APIWorld) {
   this.authToken = null;
 });

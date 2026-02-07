@@ -100,6 +100,41 @@ qa-automation/
 
 Reports are written under `reports/allure/`.
 
+## Using pretest-created data (category, plant, sale)
+
+Scenarios tagged with **`@pretest`** run a Before hook that creates a parent category, a subcategory (e.g. "Mango"), a plant under that category, and one sale. Those IDs are stored in the API world and written to `src/shared/testdata/pretest-ids.json`.
+
+### API scenarios
+
+- **Use pretest IDs in steps:** In steps that accept a plant or sale id, pass **`"pretest"`** to use the created IDs (e.g. `plant with id "pretest" is in stock`, `Admin sells plant with id "pretest" and quantity 2`).
+- **Tag:** Add **`@pretest`** to the feature or scenario so the Before hook runs and populates `createdCategoryId`, `createdPlantId`, `createdSaleId` (and writes `pretest-ids.json`).
+- **World:** Step definitions resolve `"pretest"` from `this.createdPlantId` / `this.createdSaleId` or, if missing, from `readPretestIds()` (the file).
+
+Example (see `src/api/features/sales/sales.feature`):
+
+```gherkin
+@api @auth @sales @pretest
+Feature: Sales API
+  Scenario: Admin can sell a plant via API
+    Given Admin authenticated
+    And plant with id "pretest" is in stock
+    When Admin sells plant with id "pretest" and quantity 2
+    Then the sales response status is 201
+```
+
+### UI scenarios
+
+- **Load pretest IDs:** Add a step **`Given pretest data is available`** so the UI world reads `pretest-ids.json` into `this.state.pretestIds`.
+- **Prerequisite:** Run API tests with `@pretest` at least once so the file exists, or run a script that creates category/plant/sale and writes the file.
+- **Use in steps:** After the Given step, use `this.state.pretestIds?.plantId`, `this.state.pretestIds?.categoryId`, or `this.state.pretestIds?.saleId` in your step definitions (e.g. to build URLs or assert on specific entities).
+
+Example:
+
+```gherkin
+Given pretest data is available
+# Then in your steps you can use this.state.pretestIds.plantId, etc.
+```
+
 ## Notes
 
 - Ensure the application and API are running at the URLs set in `.env` before running tests.

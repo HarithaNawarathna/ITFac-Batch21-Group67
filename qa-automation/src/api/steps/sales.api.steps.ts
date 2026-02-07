@@ -3,7 +3,8 @@ import { expect } from "@playwright/test";
 import axios from "axios";
 import { deleteSale, getAllSales, getSaleById, getSalesPage, sellPlant } from "../clients/sales.client.js";
 import type { APIWorld } from "../support/world.js";
-import { getPlantById } from "../clients/plants.client.js";
+import { getPlantsById } from "../clients/plants.client.js";
+import { readPretestIds } from "../../shared/utils/pretest-ids.js";
 
 function extractStock(maybePlant: unknown): number | null {
   if (!maybePlant || typeof maybePlant !== "object") return null;
@@ -45,7 +46,7 @@ async function fetchPlantStockOrThrow(
   plantId: number,
   token: string
 ): Promise<number> {
-  const plantResponse = await getPlantById(plantId, token);
+  const plantResponse = await getPlantsById(token, plantId);
   const stock = extractStock(plantResponse.data);
   if (stock === null) {
     throw new TypeError(
@@ -78,6 +79,21 @@ async function createSaleBestEffort(
   }
 }
 
+/** Get plant id from step param: use "pretest" for pretest-created plant, otherwise numeric id. */
+function getPlantIdFromParam(world: APIWorld, plantIdParam: string): number {
+  const normalized = plantIdParam.trim().toLowerCase();
+  if (normalized === "pretest") {
+    const id = world.createdPlantId ?? readPretestIds()?.plantId;
+    if (id == null) {
+      throw new Error(
+        "Use @pretest on this scenario so the pretest creates a plant, or run pretest.feature first to populate pretest-ids.json"
+      );
+    }
+    return Number(id);
+  }
+  return Number(plantIdParam);
+}
+
 //TC_API_002
 
 Given(
@@ -87,8 +103,8 @@ Given(
     const token = this.authToken;
     if (!token) throw new Error("Expected auth token");
 
-    this.plantId = Number(plantId);
-    this.lastResponse = await getPlantById(this.plantId, token);
+    this.plantId = getPlantIdFromParam(this, plantId);
+    this.lastResponse = await getPlantsById(token, this.plantId);
     const response = this.lastResponse;
     if (!response) throw new Error("Expected response");
 
@@ -106,19 +122,42 @@ Given(
 When(
   "Admin sells plant with id {string} and quantity {int}",
   async function (this: APIWorld, plantId: string, qty: number) {
-		expect(this.authToken).toBeTruthy();
-		const token = this.authToken;
-		if (!token) throw new Error("Expected auth token");
+    expect(this.authToken).toBeTruthy();
+    const token = this.authToken;
+    if (!token) throw new Error("Expected auth token");
 
-		this.plantId = Number(plantId);
-		this.quantitySold = qty;
+    // Resolve "pretest" -> actual numeric id
+    this.plantId = getPlantIdFromParam(this, plantId);
+    this.quantitySold = qty;
 
     try {
-      this.lastResponse = await sellPlant(
-        Number(plantId),
-        qty,
-			token
-      );
+      // FIX: use resolved id, not Number(plantId)
+      this.lastResponse = await sellPlant(this.plantId, qty, token);
+      recordSaleIdIfPresent(this, this.lastResponse.data);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        this.lastResponse = err.response;
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+// NEW: TC_API_011
+When(
+  "User sells plant with id {string} and quantity {int}",
+  async function (this: APIWorld, plantId: string, qty: number) {
+    expect(this.authToken).toBeTruthy();
+    const token = this.authToken;
+    if (!token) throw new Error("Expected auth token");
+
+    this.plantId = getPlantIdFromParam(this, plantId);
+    this.quantitySold = qty;
+
+    try {
+      this.lastResponse = await sellPlant(this.plantId, qty, token);
+      recordSaleIdIfPresent(this, this.lastResponse.data);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         this.lastResponse = err.response;
@@ -138,10 +177,10 @@ When(
     const token = this.authToken;
     if (!token) throw new Error("Expected auth token");
 
-    this.plantId = Number(plantId);
+    this.plantId = getPlantIdFromParam(this, plantId);
     if (this.initialPlantStock === null) {
       // Ensure we have a stock baseline even if the Given step was skipped/changed.
-      const plantResponse = await getPlantById(this.plantId, token);
+      const plantResponse = await getPlantsById(token, this.plantId);
       const stock = extractStock(plantResponse.data);
       if (stock === null) {
         throw new Error(
@@ -219,7 +258,7 @@ Then(
     const expected = this.initialPlantStock - this.quantitySold;
 
     // Preferred: verify via GET plant after selling
-    const plantResponse = await getPlantById(this.plantId, token);
+    const plantResponse = await getPlantsById(token, this.plantId);
     const newStock = extractStock(plantResponse.data);
     if (newStock === null) {
       throw new Error(
@@ -280,12 +319,12 @@ Given(
     const token = this.authToken;
     if (!token) throw new Error("Expected auth token");
 
-    this.plantId = Number(plantId);
+    this.plantId = getPlantIdFromParam(this, plantId);
     this.quantitySold = qty;
 
     // Best-effort: ensure plant exists and has some stock.
     try {
-      const plantResponse = await getPlantById(this.plantId, token);
+      const plantResponse = await getPlantsById(token, this.plantId);
       const stock = extractStock(plantResponse.data);
       if (stock !== null) this.initialPlantStock = stock;
     } catch {
@@ -339,7 +378,7 @@ Given(
   "at least {int} sales exist for plant with id {string} and quantity {int}",
   async function (this: APIWorld, count: number, plantId: string, qty: number) {
     const token = requireToken(this);
-    this.plantId = Number(plantId);
+    this.plantId = getPlantIdFromParam(this, plantId);
     this.quantitySold = qty;
 
     const stock = await fetchPlantStockOrThrow(this.plantId, token);
@@ -504,8 +543,14 @@ function hasAnyErrorField(payload: unknown): boolean {
 }
 
 Given("a valid sale id exists", async function (this: APIWorld) {
-  const token = requireToken(this);
+  // Prefer pretest-created sale id (from world or pretest-ids.json)
+  const fromPretest = this.createdSaleId ?? readPretestIds()?.saleId;
+  if (fromPretest) {
+    this.saleIdToFetch = fromPretest;
+    return;
+  }
 
+  const token = requireToken(this);
   const res = await getAllSales(token);
   const data = res.data as unknown;
 

@@ -15,6 +15,8 @@ export class APIWorld extends World {
 
   /** Set when a category is created so After hook can delete it. */
   createdCategoryId: string | null = null;
+  /** Set when a parent category is created in pretest so After hook can delete it. */
+  createdParentCategoryId: string | null = null;
   saleIdToFetch: string | null = null;
 
   plantId: number | null = null;

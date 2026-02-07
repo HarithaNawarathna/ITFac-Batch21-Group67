@@ -81,3 +81,19 @@ Feature: Categories
     Given I am logged in as user
     When I access Add Category page directly
     Then I am shown 403 or Access Denied
+
+  # TC_UI_50 Prevent deleting Parent Category with Sub-Categories
+  Scenario: Prevent deleting Parent Category with Sub-Categories
+    Given I am logged in as admin
+    And a parent category exists with a sub-category
+    When I navigate to the category page
+    And I click Delete on the parent category
+    Then an error message is displayed saying cannot delete parent category
+
+  # TC_UI_51 Prevent deleting Category with assigned plants
+  Scenario: Prevent deleting Sub-Category with assigned plants
+    Given I am logged in as admin
+    And a category exists with assigned plants
+    When I navigate to the category page
+    And I click Delete on the category with plants
+    Then an error message is displayed saying cannot delete category with items

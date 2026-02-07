@@ -13,6 +13,11 @@ export const ENV = {
   UI_BASE_URL: required("UI_BASE_URL"),
   API_BASE_URL: required("API_BASE_URL"),
 
+  DB_HOST: required("DB_HOST"),
+  DB_USER: required("DB_USER"),
+  DB_PASSWORD: required("DB_PASSWORD"),
+  DB_NAME: required("DB_NAME"),
+
   USERS: {
     admin: {
       username: required("ADMIN_USERNAME"),

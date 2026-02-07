@@ -1,4 +1,4 @@
-@api @plants
+@api @plants @pretest
 Feature: Plants API
 
   Scenario: TC_API_31 - View plant list
@@ -11,7 +11,7 @@ Feature: Plants API
     Given Admin authenticated
     When I create a plant with valid details
         | name    | categoryId | price | quantity |
-        | Fern    | 4          | 5000    | 10      |
+        | Fern    | pretest    | 5000  | 10      |
     Then the response status is 201
     And the plant is created successfully
 
@@ -19,23 +19,23 @@ Feature: Plants API
     Given Admin authenticated
     When I create a plant with empty name
         | name | categoryId | price | quantity |
-        |      | 4          | 50    | 100      |
+        |      | pretest    | 50    | 100      |
     Then the response status is 400
     And validation error message is displayed
 
  Scenario: TC_API_34 - Update plant details
     Given Admin authenticated
-    And a plant exists with ID 31
+    And a plant exists with ID "pretest"
     When I update plant details
-        | id | name       | price | quantity |
-        | 31  | Golden Pothos | 60    | 150      |
+        | id     | name          | price | quantity |
+        | pretest | Golden Pothos | 60    | 150      |
     Then the response status is 200
     And the updated plant details are returned
 
  Scenario: TC_API_35 - Delete plant
     Given Admin authenticated
-    And a plant exists with ID 48
-    When I delete plant with ID 48
+    And a plant exists for delete
+    When I delete the plant
     Then the response status is 204
     And plant is removed from database
 
@@ -47,14 +47,14 @@ Scenario: TC_API_37 - View plant list
 
 Scenario: TC_API_38 - Get plant by valid ID
     Given User authenticated
-    And a plant exists with ID 51
-    When I send GET request to view details for plant 51
+    And a plant exists with ID "pretest"
+    When I send GET request to view details for plant "pretest"
     Then the response status is 200
-    And the response contains correct details for plant 51
+    And the response contains correct details for plant "pretest"
 
 Scenario: TC_API_40 - Get plants by category ID
     Given User authenticated
-    When I send GET request to "/api/plants/category/4"
+    When I send GET request to plants by category id "pretest"
     Then the response status is 200
     And the response contains plants from category
 
@@ -64,5 +64,5 @@ Scenario: TC_API_41 - Access API without authentication
 
 Scenario: TC_API_42 - Get plant by invalid ID
     Given User authenticated
-    When I send GET request to view details for plant 99999 
+    When I send GET request to view details for plant "99999"
     Then the response status is 404
