@@ -9,8 +9,11 @@ dotenv.config();
 
 setDefaultTimeout(10_000);
 
-// After each scenario: call delete APIs in order (children first) – post-test cleanup
-After(async function (this: APIWorld) {
+// After each scenario: call delete APIs in order 
+After(async function (this: APIWorld, scenario) {
+  const tags: string[] = scenario?.pickle?.tags?.map((t: { name: string }) => t.name) ?? [];
+  if (tags.includes("@categoryCrud")) return;
+
   const token = this.authToken;
   if (!token) return;
 
