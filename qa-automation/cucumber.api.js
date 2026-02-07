@@ -4,5 +4,6 @@ export default {
   tags: "not @skip",
   import: ["src/api/support/**/*.ts",
      "src/api/steps/**/*.ts",
-     "src/shared/utils/pretests.ts"],
+     "src/shared/utils/pretests.ts",
+     "src/shared/utils/posttests.ts"],
 };
