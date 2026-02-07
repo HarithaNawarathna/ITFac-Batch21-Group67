@@ -108,4 +108,20 @@ export class CategoriesPage extends BasePage {
       /403|access denied|forbidden/i.test(body);
     expect(has403).toBe(true);
   }
+  async clickDeleteCategoryByName(name: string): Promise<void> {
+    this.page.once("dialog", (dialog) => dialog.accept());
+    // Finds the row containing the text 'name', then finds the delete button within that row
+    await this.page
+      .locator(`tr:has-text("${name}")`)
+      .locator(CategorySelectors.deleteButton)
+      .click();
+  }
+
+  async expectDependencyError(): Promise<void> {
+    // Adjust selector to match your specific error toast/alert
+    const errorLocator = this.page.locator(".alert-danger, .toast-error").first(); 
+    await expect(errorLocator).toBeVisible();
+    await expect(errorLocator).toContainText(/cannot delete|dependency|assigned/i);
+  }
 }
+
