@@ -34,8 +34,8 @@ Feature: Plants API
 
  Scenario: TC_API_35 - Delete plant
     Given Admin authenticated
-    And a plant exists with ID "pretest"
-    When I delete plant with ID "pretest"
+    And a plant exists for delete
+    When I delete the plant
     Then the response status is 204
     And plant is removed from database
 

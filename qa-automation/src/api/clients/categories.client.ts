@@ -54,7 +54,6 @@ export async function createRootCategoryForTest(
   );
 }
 
-/** Creates a subcategory under a parent (like pretest). Payload: { name, parent: { id: parentId } }. Use for test setup. */
 export async function createSubcategoryForTest(
   name: string,
   parentId: number,
@@ -99,11 +98,12 @@ export async function getCategories(
 export async function updateCategory(
   id: string,
   name: string,
+  parentId: string,
   token: string
 ): Promise<AxiosResponse> {
   return axios.put(
     `${baseURL}${ROUTES.CATEGORIES}/${id}`,
-    { name },
+    { name, parentId: Number(parentId) },
     {
       headers: {
         Authorization: `Bearer ${token}`,

@@ -32,13 +32,12 @@ Feature: Categories API
     When I update the category with name "Vegetables"
     Then the category is updated successfully
 
-  # TC_API_015 Delete category (uses createRootCategoryForTest + createSubcategoryForTest in "a category exists")
+  # TC_API_015 Delete category (creates one category in steps, then deletes it)
   Scenario: Delete category
     Given Admin authenticated
-    And a category exists
+    And a category exists for delete
     When I delete the category
-    Then the category is deleted successfully
-
+    Then the response status is 204
   # TC_API_016 Get category list
   Scenario: Get category list
     Given User authenticated

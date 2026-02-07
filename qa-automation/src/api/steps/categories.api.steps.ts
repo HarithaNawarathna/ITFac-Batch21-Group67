@@ -39,6 +39,26 @@ Given("a category exists", async function (this: APIWorld) {
   }
 });
 
+Given("a category exists for delete", async function (this: APIWorld) {
+  expect(this.authToken).toBeTruthy();
+  const token = this.authToken!;
+  const suffix = Math.random().toString(36).substring(2, 7);
+  const name = `Del${suffix}`;
+  try {
+    const res = await createRootCategoryForTest(name, token);
+    const data = res.data as Record<string, unknown>;
+    const id = data?.id;
+    if (id == null) throw new Error("Category response missing id");
+    this.createdCategoryId = String(id);
+    this.createdParentCategoryId = null;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response) {
+      this.lastResponse = err.response;
+    }
+    throw err;
+  }
+});
+
 When(
   "I create a category with name {string}",
   async function (this: APIWorld, name: string) {
@@ -71,8 +91,9 @@ When(
     expect(this.createdCategoryId).toBeTruthy();
     const token = this.authToken!;
     const id = this.createdCategoryId!;
+    const parentId = this.createdParentCategoryId!;
     try {
-      this.lastResponse = await updateCategory(id, name, token);
+      this.lastResponse = await updateCategory(id, name, parentId,token);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         this.lastResponse = err.response;

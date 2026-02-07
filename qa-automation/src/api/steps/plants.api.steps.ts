@@ -1,8 +1,10 @@
 import { When, Then, DataTable, Given } from "@cucumber/cucumber";
 import { expect } from "@playwright/test";
 import axios from "axios";
+import { createRootCategoryForTest, createSubcategoryForTest } from "../clients/categories.client.js";
 import { getPlants, createPlant, updatePlant, getPlantsById, deletePlant, getPlantsByCategory } from "../clients/plants.client.js";
 import type { APIWorld } from "../support/world.js";
+import { createPlantForTest } from "../support/support.js";
 import { ENV } from "../../config/env.js";
 import { readPretestIds } from "../../shared/utils/pretest-ids.js";
 
@@ -194,6 +196,45 @@ Given("a plant exists with ID {string}", async function (this: APIWorld, plantId
   }
 });
 
+Given("a plant exists for delete", async function (this: APIWorld) {
+  expect(this.authToken).toBeTruthy();
+  const token = this.authToken!;
+  const suffix = Math.random().toString(36).substring(2, 6);
+  const rootName = `Del${suffix}`;
+  const subName = `Sub${suffix}`;
+  try {
+    const rootRes = await createRootCategoryForTest(rootName, token);
+    const rootData = rootRes.data as Record<string, unknown>;
+    const parentIdRaw = rootData?.id;
+    if (parentIdRaw == null) throw new Error("Root category response missing id");
+    const parentId = Number(parentIdRaw);
+    if (!Number.isFinite(parentId)) throw new Error("Root category id is not a number");
+
+    const subRes = await createSubcategoryForTest(subName, parentId, token);
+    const subData = subRes.data as Record<string, unknown>;
+    const subIdRaw = subData?.id;
+    if (subIdRaw == null) throw new Error("Subcategory response missing id");
+    const subCategoryId = Number(subIdRaw);
+    if (!Number.isFinite(subCategoryId)) throw new Error("Subcategory id is not a number");
+
+    this.createdParentCategoryId = String(parentId);
+    this.createdCategoryId = String(subCategoryId);
+
+    const plantRes = await createPlantForTest(token, subCategoryId);
+    const plantResData = plantRes.data as Record<string, unknown>;
+    const plantIdRaw = plantResData?.id;
+    if (plantIdRaw == null) throw new Error("Plant response missing id");
+    const plantId = Number(plantIdRaw);
+    this.createdPlantId = String(plantId);
+    existingPlantId = plantId;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response) {
+      this.lastResponse = err.response;
+    }
+    throw err;
+  }
+});
+
 When(
   "I update plant details",
   async function (this: APIWorld, dataTable: DataTable) {
@@ -264,6 +305,23 @@ When(
     }
   }
 );
+
+When("I delete the plant", async function (this: APIWorld) {
+  expect(this.authToken).toBeTruthy();
+  expect(this.createdPlantId).toBeTruthy();
+  const token = this.authToken!;
+  const id = Number(this.createdPlantId!);
+  try {
+    this.lastResponse = await deletePlant(token, id);
+    this.deletedPlantId = id;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response) {
+      this.lastResponse = err.response;
+    } else {
+      throw err;
+    }
+  }
+});
 
 Then(
   "plant is removed from database",
