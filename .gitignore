@@ -115,3 +115,11 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Allure & test reports (generated; do not commit)
+reports/allure/ui-results/*
+reports/allure/api-results/*
+reports/allure/ui-report/
+reports/allure/api-report/
+reports/cucumber/
+!.gitkeep

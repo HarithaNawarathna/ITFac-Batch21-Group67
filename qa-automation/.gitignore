@@ -108,6 +108,14 @@ logs/
 *.swo
 *~.nib
 
+# Allure & test reports (generated; do not commit)
+reports/allure/ui-results/*
+reports/allure/api-results/*
+reports/allure/ui-report/
+reports/allure/api-report/
+reports/cucumber/
+!reports/allure/**/.gitkeep
+
 # Test coverage
 coverage/
 *.coverage

@@ -15,8 +15,10 @@
     "test:api:login": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/api/features/auth/login.feature --config cucumber.api.js",
     "test:api:pretest": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js src/api/features/pretest.feature --config cucumber.api.js --tags \"@api and @pretest\"",
     "test:all": "npm run test:ui && npm run test:api",
-    "report:ui": "./scripts/generate-ui-allure.sh",
-    "report:api": "./scripts/generate-api-allure.sh"
+    "report:ui": "allure allure2 reports/allure/ui-results -o reports/allure/ui-report && allure open reports/allure/ui-report",
+    "report:api": "allure allure2 reports/allure/api-results -o reports/allure/api-report && allure open reports/allure/api-report",
+    "report:ui:generate": "allure allure2 reports/allure/ui-results -o reports/allure/ui-report",
+    "report:api:generate": "allure allure2 reports/allure/api-results -o reports/allure/api-report"
   },
   "dependencies": {
     "@cucumber/cucumber": "^11.0.0",
@@ -28,6 +30,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "allure": "^3.1.0",
+    "allure-cucumberjs": "^3.4.5",
     "allure-playwright": "^3.0.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.0",
