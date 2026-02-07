@@ -1,0 +1,30 @@
+import type { APIWorld } from "../support/world.js";
+import { login } from "../clients/auth.client.js";
+import { ENV } from "../../config/env.js";
+import { expect } from "@playwright/test";
+
+export async function authenticateAdmin(world: APIWorld): Promise<void> {
+  const creds = ENV.USERS.admin;
+
+  const response = await login(creds.username, creds.password);
+  expect(response.status).toBe(200);
+
+  const data = response.data as Record<string, unknown>;
+  world.authToken = data.token as string;
+
+  expect(world.authToken).toBeTruthy();
+  world.lastResponse = response;
+}
+
+export async function authenticateUser(world: APIWorld): Promise<void> {
+  const creds = ENV.USERS.user;
+
+  const response = await login(creds.username, creds.password);
+  expect(response.status).toBe(200);
+
+  const data = response.data as Record<string, unknown>;
+  world.authToken = data.token as string;
+
+  expect(world.authToken).toBeTruthy();
+  world.lastResponse = response;
+}
