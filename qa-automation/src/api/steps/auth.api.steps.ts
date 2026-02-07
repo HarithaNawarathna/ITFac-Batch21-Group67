@@ -2,14 +2,13 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import { DataTable } from "@cucumber/cucumber";
 import { expect } from "@playwright/test";
 import axios from "axios";
-import { login } from "../clients/auth.client.js";
+import { login,    
+  authenticateAdmin,
+  authenticateUser } from "../clients/auth.client.js";
 import { ENV } from "../../config/env.js";
 import type { APIWorld } from "../support/world.js";
 import { jwtDecode } from "jwt-decode";
-import {
-  authenticateAdmin,
-  authenticateUser,
-} from "../pretests/authpretests.js";
+
 
 Given("Admin authenticated", async function (this: APIWorld) {
   await authenticateAdmin(this);
