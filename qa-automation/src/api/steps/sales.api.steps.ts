@@ -3,7 +3,7 @@ import { expect } from "@playwright/test";
 import axios from "axios";
 import { deleteSale, getAllSales, getSaleById, getSalesPage, sellPlant } from "../clients/sales.client.js";
 import type { APIWorld } from "../support/world.js";
-import { getPlantById } from "../clients/plants.client.js";
+import { getPlantsById } from "../clients/plants.client.js";
 
 function extractStock(maybePlant: unknown): number | null {
   if (!maybePlant || typeof maybePlant !== "object") return null;
@@ -45,7 +45,7 @@ async function fetchPlantStockOrThrow(
   plantId: number,
   token: string
 ): Promise<number> {
-  const plantResponse = await getPlantById(plantId, token);
+  const plantResponse = await getPlantsById(token, plantId);
   const stock = extractStock(plantResponse.data);
   if (stock === null) {
     throw new TypeError(
@@ -88,7 +88,7 @@ Given(
     if (!token) throw new Error("Expected auth token");
 
     this.plantId = Number(plantId);
-    this.lastResponse = await getPlantById(this.plantId, token);
+    this.lastResponse = await getPlantsById(token, this.plantId);
     const response = this.lastResponse;
     if (!response) throw new Error("Expected response");
 
@@ -141,7 +141,7 @@ When(
     this.plantId = Number(plantId);
     if (this.initialPlantStock === null) {
       // Ensure we have a stock baseline even if the Given step was skipped/changed.
-      const plantResponse = await getPlantById(this.plantId, token);
+      const plantResponse = await getPlantsById(token, this.plantId);
       const stock = extractStock(plantResponse.data);
       if (stock === null) {
         throw new Error(
@@ -219,7 +219,7 @@ Then(
     const expected = this.initialPlantStock - this.quantitySold;
 
     // Preferred: verify via GET plant after selling
-    const plantResponse = await getPlantById(this.plantId, token);
+    const plantResponse = await getPlantsById(token, this.plantId);
     const newStock = extractStock(plantResponse.data);
     if (newStock === null) {
       throw new Error(
@@ -285,7 +285,7 @@ Given(
 
     // Best-effort: ensure plant exists and has some stock.
     try {
-      const plantResponse = await getPlantById(this.plantId, token);
+      const plantResponse = await getPlantsById(token, this.plantId);
       const stock = extractStock(plantResponse.data);
       if (stock !== null) this.initialPlantStock = stock;
     } catch {
